@@ -10,6 +10,7 @@ import {
 import { ArticleCard } from "@/components/article-card";
 import { AuthorCard } from "@/components/author-card";
 import { AdPlacement } from "@/components/ad-placement";
+import { HomeHero } from "@/components/home-hero";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -50,56 +51,8 @@ export default async function HomePage() {
 
   return (
     <div className="container mx-auto px-4 py-8 space-y-16">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden rounded-2xl border border-zinc-800 bg-gradient-to-b from-zinc-900/60 via-zinc-950/80 to-zinc-950 p-8 sm:p-14 text-center space-y-6">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono">
-          <Terminal className="w-3.5 h-3.5" />
-          <span>PRODUCTION-GRADE DEVELOPER ECOSYSTEM</span>
-        </div>
-
-        <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight text-zinc-100 max-w-4xl mx-auto leading-tight">
-          Where Software Architects and Engineers Publish <span className="text-emerald-400">Deep Knowledge</span>
-        </h1>
-
-        <p className="text-base sm:text-lg text-zinc-400 max-w-2xl mx-auto font-sans leading-relaxed">
-          No generic listicles. Read complete technical deep-dives into Go concurrency, PostgreSQL internals, distributed consensus, and Next.js systems architecture without login or paywalls.
-        </p>
-
-        <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
-          <Link href="/explore">
-            <Button className="bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-semibold px-6 gap-2">
-              <Compass className="w-4 h-4" />
-              <span>Explore All Articles</span>
-            </Button>
-          </Link>
-          <Link href="/topics">
-            <Button variant="outline" className="border-zinc-700 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 gap-2">
-              <Layers className="w-4 h-4" />
-              <span>Browse Topics</span>
-            </Button>
-          </Link>
-          <Link href="/studio">
-            <Button variant="ghost" className="text-zinc-400 hover:text-zinc-100 font-mono text-xs">
-              Become an Author &rarr;
-            </Button>
-          </Link>
-        </div>
-
-        {/* Quick Topic Pills */}
-        <div className="pt-6 border-t border-zinc-800/80 flex flex-wrap items-center justify-center gap-2">
-          <span className="text-xs font-mono text-zinc-500 mr-2">Core Topics:</span>
-          {categories.map((c) => (
-            <Link key={c.id} href={`/topic/${c.slug}`}>
-              <Badge
-                variant="outline"
-                className="bg-zinc-900/80 border-zinc-700/80 hover:border-emerald-500/60 text-zinc-300 hover:text-emerald-300 font-mono text-xs py-1 transition-colors"
-              >
-                {c.name}
-              </Badge>
-            </Link>
-          ))}
-        </div>
-      </section>
+      {/* Dynamic Hero Section (Personalized when Authenticated, Public Landing when Guest) */}
+      <HomeHero categories={categories} />
 
       {/* Homepage Top Advertisement Placement */}
       <AdPlacement slotKey="homepage_top" className="my-8" />

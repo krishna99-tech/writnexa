@@ -48,7 +48,15 @@ function LoginForm() {
       }
 
       setSession(data.data.access_token, data.data.user, data.data.profile);
-      router.push(returnTo);
+      
+      const destination =
+        returnTo !== "/"
+          ? returnTo
+          : data.data.user.role === "admin" || data.data.user.role === "super_admin"
+          ? "/admin"
+          : "/";
+
+      router.push(destination);
     } catch (err: any) {
       setError(err?.message || "Failed to connect to authentication server.");
       setIsSubmitting(false);
