@@ -15,7 +15,6 @@ import (
 	"github.com/quorix/quorix-backend/internal/config"
 	"github.com/quorix/quorix-backend/internal/database"
 	dbQueries "github.com/quorix/quorix-backend/internal/database/sqlc"
-	"github.com/quorix/quorix-backend/internal/health"
 	"github.com/quorix/quorix-backend/internal/logger"
 	"github.com/quorix/quorix-backend/internal/middleware"
 	"github.com/quorix/quorix-backend/internal/modules/admin"
@@ -95,8 +94,6 @@ func main() {
 	router.Use(middleware.CORS(cfg.CORS))
 
 	// 7. Handlers, Email System & Routes
-	healthHandler := health.NewHandler(db, redisClient, AppVersion)
-
 	// Initialize Email & Notification System (SES API + SES SMTP Relay + Dev Mock)
 	queries := dbQueries.New(db.Pool)
 	emailSender, err := email.NewSender(cfg)
@@ -157,7 +154,6 @@ func main() {
 	// API v1 group
 	v1 := router.Group("/api/v1")
 	{
-		v1.GET("/health", healthHandler.Check)
 		v1.GET("/ping", func(c *gin.Context) {
 			response.JSON(c, http.StatusOK, gin.H{
 				"message": "pong",

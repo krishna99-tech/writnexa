@@ -101,6 +101,29 @@ func main() {
 		}
 	}
 
+	// 2.5 Seed Super Admin Account
+	adminEmail := "admin@quorix.io"
+	adminPass := "QuorixAdmin2026!"
+	adminHash, _ := security.HashPassword(adminPass)
+	existingAdmin, err := queries.GetUserByEmail(ctx, adminEmail)
+	if err != nil || existingAdmin.Email == "" {
+		newAdmin, err := queries.CreateUser(ctx, db.CreateUserParams{
+			Email:        adminEmail,
+			PasswordHash: adminHash,
+			Role:         "super_admin",
+			Status:       "active",
+		})
+		if err == nil {
+			_ = queries.SetUserEmailVerified(ctx, newAdmin.ID)
+			_, _ = queries.CreateProfile(ctx, db.CreateProfileParams{
+				UserID:      newAdmin.ID,
+				Username:    "admin",
+				DisplayName: "System Administrator",
+			})
+			slog.Info("Default super_admin seeded successfully", slog.String("email", adminEmail))
+		}
+	}
+
 	// 3. Seed Core Authors
 	authors := []struct {
 		Email       string
