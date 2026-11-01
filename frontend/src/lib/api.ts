@@ -1020,3 +1020,380 @@ export async function fetchPopularArticles(
     };
   }
 }
+
+// --------------------------------------------------------------------------
+// Phase 10: Super Admin Center, Audit Trail & Moderation
+// --------------------------------------------------------------------------
+
+export interface AdminDashboardStats {
+  total_users: number;
+  new_registrations_7d: number;
+  new_registrations_30d: number;
+  total_authors: number;
+  published_articles: number;
+  draft_articles: number;
+  archived_articles: number;
+  total_comments: number;
+  total_views: number;
+  daily_active_users: number;
+  monthly_active_users: number;
+  pending_reports: number;
+}
+
+export interface AdminUserSummary {
+  id: string;
+  email: string;
+  role: "user" | "author" | "moderator" | "admin" | "super_admin";
+  status: "pending_verification" | "active" | "suspended" | "deactivated";
+  email_verified: boolean;
+  created_at: string;
+  updated_at: string;
+  username?: string | null;
+  display_name?: string | null;
+  avatar_url?: string | null;
+  headline?: string | null;
+  article_count: number;
+  follower_count: number;
+  following_count: number;
+}
+
+export interface AdminUserDetail extends AdminUserSummary {
+  bio?: string | null;
+  github_url?: string | null;
+  twitter_url?: string | null;
+  linkedin_url?: string | null;
+  website_url?: string | null;
+  location?: string | null;
+  active_sessions_count: number;
+}
+
+export interface AdminArticleSummary {
+  id: string;
+  author_id: string;
+  category_id?: string | null;
+  title: string;
+  slug: string;
+  subtitle?: string | null;
+  cover_image_url?: string | null;
+  reading_time_minutes: number;
+  views_count: number;
+  likes_count: number;
+  bookmarks_count: number;
+  comments_count: number;
+  featured: boolean;
+  status: "draft" | "published" | "archived";
+  published_at?: string | null;
+  created_at: string;
+  updated_at: string;
+  author_username: string;
+  author_display_name: string;
+  author_avatar_url?: string | null;
+  category_name?: string | null;
+  category_slug?: string | null;
+}
+
+export interface AuditLogItem {
+  id: string;
+  actor_id?: string | null;
+  actor_email: string;
+  actor_role: string;
+  action: string;
+  target_type: string;
+  target_id?: string | null;
+  details: any;
+  ip_address?: string | null;
+  user_agent?: string | null;
+  created_at: string;
+  actor_username?: string | null;
+  actor_display_name?: string | null;
+}
+
+export interface ModerationReportItem {
+  id: string;
+  reporter_id?: string | null;
+  target_type: "article" | "comment" | "user";
+  target_id: string;
+  reason: string;
+  details?: string | null;
+  status: "pending" | "reviewed" | "dismissed" | "action_taken";
+  resolved_by?: string | null;
+  resolution_notes?: string | null;
+  resolved_at?: string | null;
+  created_at: string;
+  updated_at: string;
+  reporter_username?: string | null;
+  reporter_display_name?: string | null;
+  resolver_username?: string | null;
+  resolver_display_name?: string | null;
+}
+
+export interface PlatformSettingItem {
+  key: string;
+  value: string;
+  description?: string | null;
+  updated_by?: string | null;
+  updated_at: string;
+}
+
+export async function fetchAdminDashboard(
+  token: string
+): Promise<ApiResponse<{ stats: AdminDashboardStats }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/admin/dashboard`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    return await res.json();
+  } catch (error: any) {
+    return { success: false, error: { code: "FETCH_FAILED", message: error?.message || "Failed to fetch stats" } };
+  }
+}
+
+export async function fetchAdminUsers(
+  token: string,
+  params: { q?: string; role?: string; status?: string; page?: number; per_page?: number }
+): Promise<ApiResponse<{ users: AdminUserSummary[] }>> {
+  try {
+    const qp = new URLSearchParams();
+    if (params.q) qp.set("q", params.q);
+    if (params.role) qp.set("role", params.role);
+    if (params.status) qp.set("status", params.status);
+    if (params.page) qp.set("page", params.page.toString());
+    if (params.per_page) qp.set("per_page", params.per_page.toString());
+
+    const res = await fetch(`${API_BASE_URL}/api/v1/admin/users?${qp.toString()}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    return await res.json();
+  } catch (error: any) {
+    return { success: false, error: { code: "FETCH_FAILED", message: error?.message || "Failed to fetch users" } };
+  }
+}
+
+export async function fetchAdminUserDetail(
+  token: string,
+  id: string
+): Promise<ApiResponse<{ user: AdminUserDetail }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/admin/users/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    return await res.json();
+  } catch (error: any) {
+    return { success: false, error: { code: "FETCH_FAILED", message: error?.message || "Failed to fetch user" } };
+  }
+}
+
+export async function updateAdminUserStatus(
+  token: string,
+  id: string,
+  status: string
+): Promise<ApiResponse<{ message: string }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/admin/users/${id}/status`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ status }),
+    });
+    return await res.json();
+  } catch (error: any) {
+    return { success: false, error: { code: "UPDATE_FAILED", message: error?.message || "Failed to update status" } };
+  }
+}
+
+export async function updateAdminUserRole(
+  token: string,
+  id: string,
+  role: string
+): Promise<ApiResponse<{ message: string }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/admin/users/${id}/role`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ role }),
+    });
+    return await res.json();
+  } catch (error: any) {
+    return { success: false, error: { code: "UPDATE_FAILED", message: error?.message || "Failed to update role" } };
+  }
+}
+
+export async function fetchAdminArticles(
+  token: string,
+  params: { q?: string; status?: string; page?: number; per_page?: number }
+): Promise<ApiResponse<{ articles: AdminArticleSummary[] }>> {
+  try {
+    const qp = new URLSearchParams();
+    if (params.q) qp.set("q", params.q);
+    if (params.status) qp.set("status", params.status);
+    if (params.page) qp.set("page", params.page.toString());
+    if (params.per_page) qp.set("per_page", params.per_page.toString());
+
+    const res = await fetch(`${API_BASE_URL}/api/v1/admin/articles?${qp.toString()}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    return await res.json();
+  } catch (error: any) {
+    return { success: false, error: { code: "FETCH_FAILED", message: error?.message || "Failed to fetch articles" } };
+  }
+}
+
+export async function toggleAdminFeatureArticle(
+  token: string,
+  id: string,
+  featured: boolean
+): Promise<ApiResponse<{ message: string }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/admin/articles/${id}/feature`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ featured }),
+    });
+    return await res.json();
+  } catch (error: any) {
+    return { success: false, error: { code: "UPDATE_FAILED", message: error?.message || "Failed to toggle feature" } };
+  }
+}
+
+export async function archiveAdminArticle(
+  token: string,
+  id: string
+): Promise<ApiResponse<{ message: string }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/admin/articles/${id}/archive`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return await res.json();
+  } catch (error: any) {
+    return { success: false, error: { code: "ARCHIVE_FAILED", message: error?.message || "Failed to archive article" } };
+  }
+}
+
+export async function fetchAdminAuditLogs(
+  token: string,
+  params: { action?: string; target_type?: string; page?: number; per_page?: number }
+): Promise<ApiResponse<{ logs: AuditLogItem[] }>> {
+  try {
+    const qp = new URLSearchParams();
+    if (params.action) qp.set("action", params.action);
+    if (params.target_type) qp.set("target_type", params.target_type);
+    if (params.page) qp.set("page", params.page.toString());
+    if (params.per_page) qp.set("per_page", params.per_page.toString());
+
+    const res = await fetch(`${API_BASE_URL}/api/v1/admin/audit-logs?${qp.toString()}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    return await res.json();
+  } catch (error: any) {
+    return { success: false, error: { code: "FETCH_FAILED", message: error?.message || "Failed to fetch audit logs" } };
+  }
+}
+
+export async function fetchAdminReports(
+  token: string,
+  params: { status?: string; target_type?: string; page?: number; per_page?: number }
+): Promise<ApiResponse<{ reports: ModerationReportItem[] }>> {
+  try {
+    const qp = new URLSearchParams();
+    if (params.status) qp.set("status", params.status);
+    if (params.target_type) qp.set("target_type", params.target_type);
+    if (params.page) qp.set("page", params.page.toString());
+    if (params.per_page) qp.set("per_page", params.per_page.toString());
+
+    const res = await fetch(`${API_BASE_URL}/api/v1/admin/reports?${qp.toString()}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    return await res.json();
+  } catch (error: any) {
+    return { success: false, error: { code: "FETCH_FAILED", message: error?.message || "Failed to fetch reports" } };
+  }
+}
+
+export async function resolveAdminReport(
+  token: string,
+  id: string,
+  status: string,
+  notes?: string
+): Promise<ApiResponse<{ message: string }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/admin/reports/${id}/resolve`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ status, notes }),
+    });
+    return await res.json();
+  } catch (error: any) {
+    return { success: false, error: { code: "RESOLVE_FAILED", message: error?.message || "Failed to resolve report" } };
+  }
+}
+
+export async function createContentReport(
+  token: string,
+  data: { target_type: string; target_id: string; reason: string; details?: string }
+): Promise<ApiResponse<{ message: string; report: ModerationReportItem }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/reports`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+    return await res.json();
+  } catch (error: any) {
+    return { success: false, error: { code: "REPORT_FAILED", message: error?.message || "Failed to create report" } };
+  }
+}
+
+export async function fetchPlatformSettings(
+  token: string
+): Promise<ApiResponse<{ settings: PlatformSettingItem[] }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/admin/settings`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    return await res.json();
+  } catch (error: any) {
+    return { success: false, error: { code: "FETCH_FAILED", message: error?.message || "Failed to fetch settings" } };
+  }
+}
+
+export async function updatePlatformSetting(
+  token: string,
+  key: string,
+  value: string
+): Promise<ApiResponse<{ message: string }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/admin/settings/${encodeURIComponent(key)}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ value }),
+    });
+    return await res.json();
+  } catch (error: any) {
+    return { success: false, error: { code: "UPDATE_FAILED", message: error?.message || "Failed to update setting" } };
+  }
+}

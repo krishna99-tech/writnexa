@@ -18,6 +18,7 @@ import (
 	"github.com/quorix/quorix-backend/internal/health"
 	"github.com/quorix/quorix-backend/internal/logger"
 	"github.com/quorix/quorix-backend/internal/middleware"
+	"github.com/quorix/quorix-backend/internal/modules/admin"
 	"github.com/quorix/quorix-backend/internal/modules/auth"
 	"github.com/quorix/quorix-backend/internal/modules/community"
 	"github.com/quorix/quorix-backend/internal/modules/content"
@@ -128,6 +129,10 @@ func main() {
 	searchSvc := search.NewService(db, queries)
 	searchHandler := search.NewHandler(searchSvc)
 
+	// Super Admin & Moderation Module
+	adminSvc := admin.NewService(db, queries)
+	adminHandler := admin.NewHandler(adminSvc)
+
 	// Root health endpoints
 	router.GET("/health", healthHandler.Check)
 
@@ -146,6 +151,7 @@ func main() {
 		search.RegisterRoutes(v1, searchHandler)
 		studio.RegisterRoutes(v1, studioHandler, cfg)
 		community.RegisterRoutes(v1, communityHandler, cfg)
+		admin.RegisterRoutes(v1, adminHandler, cfg)
 		email.RegisterRoutes(v1, emailHandler, cfg)
 		auth.RegisterRoutes(v1, authHandler, cfg)
 	}

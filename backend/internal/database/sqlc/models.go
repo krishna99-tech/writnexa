@@ -10,6 +10,20 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type AdminAuditLog struct {
+	ID         pgtype.UUID        `json:"id"`
+	ActorID    pgtype.UUID        `json:"actor_id"`
+	ActorEmail string             `json:"actor_email"`
+	ActorRole  string             `json:"actor_role"`
+	Action     string             `json:"action"`
+	TargetType string             `json:"target_type"`
+	TargetID   pgtype.Text        `json:"target_id"`
+	Details    []byte             `json:"details"`
+	IpAddress  pgtype.Text        `json:"ip_address"`
+	UserAgent  pgtype.Text        `json:"user_agent"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+}
+
 type Article struct {
 	ID                 pgtype.UUID        `json:"id"`
 	AuthorID           pgtype.UUID        `json:"author_id"`
@@ -137,6 +151,21 @@ type Like struct {
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 }
 
+type ModerationReport struct {
+	ID              pgtype.UUID        `json:"id"`
+	ReporterID      pgtype.UUID        `json:"reporter_id"`
+	TargetType      string             `json:"target_type"`
+	TargetID        pgtype.UUID        `json:"target_id"`
+	Reason          string             `json:"reason"`
+	Details         pgtype.Text        `json:"details"`
+	Status          string             `json:"status"`
+	ResolvedBy      pgtype.UUID        `json:"resolved_by"`
+	ResolutionNotes pgtype.Text        `json:"resolution_notes"`
+	ResolvedAt      pgtype.Timestamptz `json:"resolved_at"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+}
+
 type NotificationPreference struct {
 	UserID                pgtype.UUID        `json:"user_id"`
 	EmailOnNewFollower    bool               `json:"email_on_new_follower"`
@@ -154,6 +183,14 @@ type PasswordResetToken struct {
 	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
 	UsedAt    pgtype.Timestamptz `json:"used_at"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type PlatformSetting struct {
+	Key         string             `json:"key"`
+	Value       string             `json:"value"`
+	Description pgtype.Text        `json:"description"`
+	UpdatedBy   pgtype.UUID        `json:"updated_by"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 }
 
 type Profile struct {
