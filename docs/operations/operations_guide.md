@@ -104,3 +104,4 @@ Administrators can inspect and recover failed background jobs from the Operation
 - **No Secrets in Logs or APIs**: Database credentials, Argon2id password hashes, JWT signing secrets, and AWS SES credentials are never serialized in API responses or logs.
 - **Sensitive Error Masking**: Public endpoints return generic error codes (`INTERNAL_ERROR`, `SERVICE_UNREADY`), while detailed stack traces are restricted to server-side logs.
 - **RBAC Enforcement**: All administrative operational controls require verified JWT tokens with `admin` or `super_admin` roles.
+

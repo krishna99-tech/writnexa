@@ -29,12 +29,15 @@ pnpm-debug.log*
 
 # Environment files
 .env
+.env.production
 .env.local
 .env.development.local
 .env.test.local
 .env.production.local
 backend/.env
 frontend/.env.local
+!.env.example
+!.env.production.example
 
 # IDE & OS
 .vscode/

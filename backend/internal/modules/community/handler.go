@@ -19,6 +19,13 @@ func NewHandler(svc Service) *Handler {
 	return &Handler{svc: svc}
 }
 
+func getArticleParam(c *gin.Context) string {
+	if s := c.Param("slug"); s != "" {
+		return s
+	}
+	return c.Param("id")
+}
+
 // ToggleLike handles POST /api/v1/articles/:id/like
 func (h *Handler) ToggleLike(c *gin.Context) {
 	userID, ok := getContextUserID(c)
@@ -26,7 +33,7 @@ func (h *Handler) ToggleLike(c *gin.Context) {
 		return
 	}
 
-	articleID, err := uuid.Parse(c.Param("id"))
+	articleID, err := uuid.Parse(getArticleParam(c))
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, "INVALID_ID", "Invalid article ID")
 		return
@@ -55,7 +62,7 @@ func (h *Handler) ToggleBookmark(c *gin.Context) {
 		return
 	}
 
-	articleID, err := uuid.Parse(c.Param("id"))
+	articleID, err := uuid.Parse(getArticleParam(c))
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, "INVALID_ID", "Invalid article ID")
 		return
@@ -84,7 +91,7 @@ func (h *Handler) GetInteractionStatus(c *gin.Context) {
 		return
 	}
 
-	articleID, err := uuid.Parse(c.Param("id"))
+	articleID, err := uuid.Parse(getArticleParam(c))
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, "INVALID_ID", "Invalid article ID")
 		return
@@ -141,7 +148,7 @@ func (h *Handler) CreateComment(c *gin.Context) {
 		return
 	}
 
-	articleID, err := uuid.Parse(c.Param("id"))
+	articleID, err := uuid.Parse(getArticleParam(c))
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, "INVALID_ID", "Invalid article ID")
 		return
@@ -175,7 +182,7 @@ func (h *Handler) CreateComment(c *gin.Context) {
 
 // ListComments handles GET /api/v1/articles/:id/comments (Public)
 func (h *Handler) ListComments(c *gin.Context) {
-	articleID, err := uuid.Parse(c.Param("id"))
+	articleID, err := uuid.Parse(getArticleParam(c))
 	if err != nil {
 		response.Error(c, http.StatusBadRequest, "INVALID_ID", "Invalid article ID")
 		return

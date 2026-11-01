@@ -24,3 +24,4 @@ func RegisterRoutes(r *gin.RouterGroup, h *Handler, cfg *config.Config) {
 		adminOps.POST("/retry-all-jobs", h.RetryAllJobs)
 	}
 }
+

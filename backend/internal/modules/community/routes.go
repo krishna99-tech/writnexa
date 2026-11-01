@@ -9,7 +9,8 @@ import (
 // RegisterRoutes registers all community, social, and notification endpoints.
 func RegisterRoutes(r *gin.RouterGroup, h *Handler, cfg *config.Config) {
 	// Public comments endpoint (Guests can read discussions without authentication)
-	r.GET("/articles/:id/comments", h.ListComments)
+	// Uses :slug wildcard matching content.RegisterRoutes to avoid Gin radix tree conflict
+	r.GET("/articles/:slug/comments", h.ListComments)
 
 	// Protected Community Endpoints
 	authMW := middleware.Authenticate(cfg.JWT.AccessSecret)
@@ -18,10 +19,10 @@ func RegisterRoutes(r *gin.RouterGroup, h *Handler, cfg *config.Config) {
 	articles := r.Group("/articles")
 	articles.Use(authMW)
 	{
-		articles.POST("/:id/like", h.ToggleLike)
-		articles.POST("/:id/bookmark", h.ToggleBookmark)
-		articles.GET("/:id/interaction", h.GetInteractionStatus)
-		articles.POST("/:id/comments", h.CreateComment)
+		articles.POST("/:slug/like", h.ToggleLike)
+		articles.POST("/:slug/bookmark", h.ToggleBookmark)
+		articles.GET("/:slug/interaction", h.GetInteractionStatus)
+		articles.POST("/:slug/comments", h.CreateComment)
 	}
 
 	// Comment Modifications

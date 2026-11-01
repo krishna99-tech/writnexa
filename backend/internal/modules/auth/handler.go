@@ -27,6 +27,7 @@ func NewHandler(svc Service, cfg *config.Config) *Handler {
 // Helper to set the HTTP-only refresh cookie
 func (h *Handler) setRefreshCookie(c *gin.Context, token string, ttl time.Duration) {
 	maxAge := int(ttl.Seconds())
+	c.SetSameSite(http.SameSiteLaxMode)
 	c.SetCookie(
 		h.cfg.JWT.CookieName,
 		token,
@@ -40,6 +41,7 @@ func (h *Handler) setRefreshCookie(c *gin.Context, token string, ttl time.Durati
 
 // Helper to clear the HTTP-only refresh cookie
 func (h *Handler) clearRefreshCookie(c *gin.Context) {
+	c.SetSameSite(http.SameSiteLaxMode)
 	c.SetCookie(
 		h.cfg.JWT.CookieName,
 		"",

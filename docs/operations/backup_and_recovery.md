@@ -136,3 +136,4 @@ If Redis crashes or restarts:
 ## 5. Disaster Recovery Testing Cadence
 - **Weekly Automated Test**: Test restoration script imports latest snapshot into an isolated staging environment and runs automated schema migration checks.
 - **Quarterly Drill**: Scheduled simulation of primary database failover with documented sign-off from Platform Engineering.
+

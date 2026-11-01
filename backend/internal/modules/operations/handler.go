@@ -114,3 +114,4 @@ func (h *Handler) RetryAllJobs(c *gin.Context) {
 		"message": "Eligible background tasks have been reset to pending state",
 	})
 }
+

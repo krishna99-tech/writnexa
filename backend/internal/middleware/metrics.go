@@ -153,3 +153,4 @@ func MetricsTelemetryMiddleware() gin.HandlerFunc {
 		globalMetrics.Record(c.Writer.Status(), latency)
 	}
 }
+
