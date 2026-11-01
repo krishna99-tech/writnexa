@@ -22,6 +22,7 @@ import (
 	"github.com/quorix/quorix-backend/internal/modules/community"
 	"github.com/quorix/quorix-backend/internal/modules/content"
 	"github.com/quorix/quorix-backend/internal/modules/email"
+	"github.com/quorix/quorix-backend/internal/modules/search"
 	"github.com/quorix/quorix-backend/internal/modules/studio"
 	"github.com/quorix/quorix-backend/internal/redis"
 	"github.com/quorix/quorix-backend/internal/response"
@@ -123,6 +124,10 @@ func main() {
 	communitySvc := community.NewService(db, queries, emailSvc)
 	communityHandler := community.NewHandler(communitySvc)
 
+	// Search & Discovery Module
+	searchSvc := search.NewService(db, queries)
+	searchHandler := search.NewHandler(searchSvc)
+
 	// Root health endpoints
 	router.GET("/health", healthHandler.Check)
 
@@ -138,6 +143,7 @@ func main() {
 		})
 
 		content.RegisterRoutes(v1, contentHandler, cfg)
+		search.RegisterRoutes(v1, searchHandler)
 		studio.RegisterRoutes(v1, studioHandler, cfg)
 		community.RegisterRoutes(v1, communityHandler, cfg)
 		email.RegisterRoutes(v1, emailHandler, cfg)

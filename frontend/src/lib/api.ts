@@ -949,3 +949,74 @@ export async function markAllNotificationsRead(
     };
   }
 }
+
+// --------------------------------------------------------------------------
+// Phase 9: Search and Discovery
+// --------------------------------------------------------------------------
+
+export interface SearchParams {
+  q?: string;
+  type?: "all" | "articles" | "authors";
+  category?: string;
+  tag?: string;
+  sort?: "relevance" | "latest" | "popular" | "trending";
+  page?: number;
+  per_page?: number;
+}
+
+export interface SearchResultData {
+  query: string;
+  type: string;
+  articles: ArticleSummary[];
+  authors: AuthorSummary[];
+  articles_total: number;
+  authors_total: number;
+  meta: {
+    page: number;
+    per_page: number;
+    total_pages: number;
+    articles_total: number;
+    authors_total: number;
+  };
+}
+
+export async function globalSearch(
+  params: SearchParams
+): Promise<ApiResponse<SearchResultData>> {
+  try {
+    const queryParams = new URLSearchParams();
+    if (params.q) queryParams.set("q", params.q);
+    if (params.type) queryParams.set("type", params.type);
+    if (params.category) queryParams.set("category", params.category);
+    if (params.tag) queryParams.set("tag", params.tag);
+    if (params.sort) queryParams.set("sort", params.sort);
+    if (params.page) queryParams.set("page", params.page.toString());
+    if (params.per_page) queryParams.set("per_page", params.per_page.toString());
+
+    const res = await fetch(`${API_BASE_URL}/api/v1/search?${queryParams.toString()}`, {
+      cache: "no-store",
+    });
+    return await res.json();
+  } catch (error: any) {
+    return {
+      success: false,
+      error: { code: "SEARCH_FAILED", message: error?.message || "Search failed" },
+    };
+  }
+}
+
+export async function fetchPopularArticles(
+  limit = 10
+): Promise<ApiResponse<{ articles: ArticleSummary[]; count: number }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/articles/popular?limit=${limit}`, {
+      cache: "no-store",
+    });
+    return await res.json();
+  } catch (error: any) {
+    return {
+      success: false,
+      error: { code: "FETCH_FAILED", message: error?.message || "Failed to fetch popular articles" },
+    };
+  }
+}

@@ -61,20 +61,14 @@ export default async function ExplorePage({
       {/* Search & Filter Toolbar */}
       <div className="p-4 rounded-xl border border-zinc-800 bg-zinc-900/40 space-y-4">
         {/* Search Input */}
-        <form method="GET" action="/explore" className="relative flex items-center">
+        <form method="GET" action="/search" className="relative flex items-center">
           <Search className="w-4 h-4 absolute left-3 text-zinc-500" />
           <Input
             name="q"
             defaultValue={searchQuery}
-            placeholder="Search keywords, topics, systems, algorithms..."
+            placeholder="Search keywords, topics, systems, algorithms, or authors..."
             className="pl-9 bg-zinc-950 border-zinc-800 font-mono text-xs h-10 w-full"
           />
-          {currentSort !== "latest" && (
-            <input type="hidden" name="sort" value={currentSort} />
-          )}
-          {currentCategory && (
-            <input type="hidden" name="category" value={currentCategory} />
-          )}
         </form>
 
         {/* Sort & Category Chips */}
@@ -84,7 +78,7 @@ export default async function ExplorePage({
             <span className="text-zinc-500 mr-1 flex items-center gap-1">
               <SlidersHorizontal className="w-3 h-3" /> Sort:
             </span>
-            {(["latest", "trending", "featured"] as const).map((s) => {
+            {(["latest", "trending", "popular", "featured"] as const).map((s) => {
               const active = currentSort === s;
               const nextParams = new URLSearchParams();
               if (searchQuery) nextParams.set("q", searchQuery);

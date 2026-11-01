@@ -14,6 +14,7 @@ import {
   Bell,
   Bookmark,
   Rss,
+  Search,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
@@ -109,7 +110,20 @@ export function Navbar() {
           </nav>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 sm:gap-3">
+          {/* Quick Search Shortcut */}
+          <Link href="/search">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-8 gap-1.5 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 font-mono text-xs"
+              title="Search QUORIX"
+            >
+              <Search className="w-4 h-4 text-emerald-400" />
+              <span className="hidden sm:inline">Search</span>
+            </Button>
+          </Link>
+
           {isLoading ? (
             <div className="w-20 h-8 rounded bg-zinc-900 animate-pulse" />
           ) : user ? (
