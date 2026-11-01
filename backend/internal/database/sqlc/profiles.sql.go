@@ -11,6 +11,19 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countPublicAuthors = `-- name: CountPublicAuthors :one
+SELECT COUNT(*) FROM profiles p
+JOIN users u ON p.user_id = u.id
+WHERE u.status = 'active' AND u.deleted_at IS NULL
+`
+
+func (q *Queries) CountPublicAuthors(ctx context.Context) (int64, error) {
+	row := q.db.QueryRow(ctx, countPublicAuthors)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createProfile = `-- name: CreateProfile :one
 INSERT INTO profiles (
     user_id,
@@ -156,6 +169,80 @@ type IncrementArticleCountParams struct {
 func (q *Queries) IncrementArticleCount(ctx context.Context, arg IncrementArticleCountParams) error {
 	_, err := q.db.Exec(ctx, incrementArticleCount, arg.UserID, arg.ArticleCount)
 	return err
+}
+
+const listPublicAuthors = `-- name: ListPublicAuthors :many
+SELECT p.user_id, p.username, p.display_name, p.headline, p.bio, p.avatar_url, p.github_url, p.twitter_url, p.linkedin_url, p.website_url, p.location, p.article_count, p.follower_count, p.following_count, p.created_at, p.updated_at, u.role, u.status
+FROM profiles p
+JOIN users u ON p.user_id = u.id
+WHERE u.status = 'active' AND u.deleted_at IS NULL
+ORDER BY p.article_count DESC, p.follower_count DESC, p.created_at ASC
+LIMIT $1 OFFSET $2
+`
+
+type ListPublicAuthorsParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+type ListPublicAuthorsRow struct {
+	UserID         pgtype.UUID        `json:"user_id"`
+	Username       string             `json:"username"`
+	DisplayName    string             `json:"display_name"`
+	Headline       pgtype.Text        `json:"headline"`
+	Bio            pgtype.Text        `json:"bio"`
+	AvatarUrl      pgtype.Text        `json:"avatar_url"`
+	GithubUrl      pgtype.Text        `json:"github_url"`
+	TwitterUrl     pgtype.Text        `json:"twitter_url"`
+	LinkedinUrl    pgtype.Text        `json:"linkedin_url"`
+	WebsiteUrl     pgtype.Text        `json:"website_url"`
+	Location       pgtype.Text        `json:"location"`
+	ArticleCount   int32              `json:"article_count"`
+	FollowerCount  int32              `json:"follower_count"`
+	FollowingCount int32              `json:"following_count"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
+	Role           string             `json:"role"`
+	Status         string             `json:"status"`
+}
+
+func (q *Queries) ListPublicAuthors(ctx context.Context, arg ListPublicAuthorsParams) ([]ListPublicAuthorsRow, error) {
+	rows, err := q.db.Query(ctx, listPublicAuthors, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListPublicAuthorsRow{}
+	for rows.Next() {
+		var i ListPublicAuthorsRow
+		if err := rows.Scan(
+			&i.UserID,
+			&i.Username,
+			&i.DisplayName,
+			&i.Headline,
+			&i.Bio,
+			&i.AvatarUrl,
+			&i.GithubUrl,
+			&i.TwitterUrl,
+			&i.LinkedinUrl,
+			&i.WebsiteUrl,
+			&i.Location,
+			&i.ArticleCount,
+			&i.FollowerCount,
+			&i.FollowingCount,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.Role,
+			&i.Status,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const updateFollowerCounts = `-- name: UpdateFollowerCounts :exec

@@ -15,3 +15,4 @@ func RegisterRoutes(r *gin.RouterGroup, h *Handler, cfg *config.Config) {
 		notifications.PUT("/preferences", h.UpdatePreferences)
 	}
 }
+

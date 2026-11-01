@@ -81,3 +81,4 @@ func (h *Handler) UpdatePreferences(c *gin.Context) {
 		},
 	})
 }
+

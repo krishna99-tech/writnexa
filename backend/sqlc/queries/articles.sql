@@ -24,9 +24,17 @@ WHERE id = $1 AND deleted_at IS NULL
 LIMIT 1;
 
 -- name: GetArticleBySlug :one
-SELECT a.*, p.username as author_username, p.display_name as author_display_name, p.avatar_url as author_avatar_url
+SELECT 
+    a.*, 
+    p.username as author_username, 
+    p.display_name as author_display_name, 
+    p.avatar_url as author_avatar_url,
+    p.headline as author_headline,
+    c.name as category_name,
+    c.slug as category_slug
 FROM articles a
 JOIN profiles p ON a.author_id = p.user_id
+LEFT JOIN categories c ON a.category_id = c.id
 WHERE a.slug = $1 AND a.status = 'published' AND a.deleted_at IS NULL
 LIMIT 1;
 
@@ -55,21 +63,132 @@ SET
     updated_at = NOW()
 WHERE id = $1;
 
+-- name: CountPublishedArticles :one
+SELECT COUNT(*) FROM articles
+WHERE status = 'published' AND deleted_at IS NULL;
+
 -- name: ListPublishedArticles :many
-SELECT a.*, p.username as author_username, p.display_name as author_display_name, p.avatar_url as author_avatar_url
+SELECT 
+    a.id, a.author_id, a.category_id, a.title, a.slug, a.subtitle, a.cover_image_url,
+    a.reading_time_minutes, a.views_count, a.likes_count, a.bookmarks_count, a.comments_count,
+    a.featured, a.published_at, a.created_at,
+    p.username as author_username, p.display_name as author_display_name, p.avatar_url as author_avatar_url,
+    c.name as category_name, c.slug as category_slug
 FROM articles a
 JOIN profiles p ON a.author_id = p.user_id
+LEFT JOIN categories c ON a.category_id = c.id
 WHERE a.status = 'published' AND a.deleted_at IS NULL
 ORDER BY a.published_at DESC
 LIMIT $1 OFFSET $2;
 
 -- name: ListFeaturedArticles :many
-SELECT a.*, p.username as author_username, p.display_name as author_display_name, p.avatar_url as author_avatar_url
+SELECT 
+    a.id, a.author_id, a.category_id, a.title, a.slug, a.subtitle, a.cover_image_url,
+    a.reading_time_minutes, a.views_count, a.likes_count, a.bookmarks_count, a.comments_count,
+    a.featured, a.published_at, a.created_at,
+    p.username as author_username, p.display_name as author_display_name, p.avatar_url as author_avatar_url,
+    c.name as category_name, c.slug as category_slug
 FROM articles a
 JOIN profiles p ON a.author_id = p.user_id
+LEFT JOIN categories c ON a.category_id = c.id
 WHERE a.status = 'published' AND a.featured = TRUE AND a.deleted_at IS NULL
 ORDER BY a.published_at DESC
 LIMIT $1;
+
+-- name: ListTrendingArticles :many
+SELECT 
+    a.id, a.author_id, a.category_id, a.title, a.slug, a.subtitle, a.cover_image_url,
+    a.reading_time_minutes, a.views_count, a.likes_count, a.bookmarks_count, a.comments_count,
+    a.featured, a.published_at, a.created_at,
+    p.username as author_username, p.display_name as author_display_name, p.avatar_url as author_avatar_url,
+    c.name as category_name, c.slug as category_slug
+FROM articles a
+JOIN profiles p ON a.author_id = p.user_id
+LEFT JOIN categories c ON a.category_id = c.id
+WHERE a.status = 'published' AND a.deleted_at IS NULL
+ORDER BY (a.likes_count * 3 + a.comments_count * 5 + a.views_count) DESC, a.published_at DESC
+LIMIT $1;
+
+-- name: ListArticlesByCategory :many
+SELECT 
+    a.id, a.author_id, a.category_id, a.title, a.slug, a.subtitle, a.cover_image_url,
+    a.reading_time_minutes, a.views_count, a.likes_count, a.bookmarks_count, a.comments_count,
+    a.featured, a.published_at, a.created_at,
+    p.username as author_username, p.display_name as author_display_name, p.avatar_url as author_avatar_url,
+    c.name as category_name, c.slug as category_slug
+FROM articles a
+JOIN profiles p ON a.author_id = p.user_id
+LEFT JOIN categories c ON a.category_id = c.id
+WHERE a.status = 'published' AND a.deleted_at IS NULL AND c.slug = $1
+ORDER BY a.published_at DESC
+LIMIT $2 OFFSET $3;
+
+-- name: CountArticlesByCategory :one
+SELECT COUNT(*) FROM articles a
+JOIN categories c ON a.category_id = c.id
+WHERE a.status = 'published' AND a.deleted_at IS NULL AND c.slug = $1;
+
+-- name: ListArticlesByTag :many
+SELECT 
+    a.id, a.author_id, a.category_id, a.title, a.slug, a.subtitle, a.cover_image_url,
+    a.reading_time_minutes, a.views_count, a.likes_count, a.bookmarks_count, a.comments_count,
+    a.featured, a.published_at, a.created_at,
+    p.username as author_username, p.display_name as author_display_name, p.avatar_url as author_avatar_url,
+    c.name as category_name, c.slug as category_slug
+FROM articles a
+JOIN profiles p ON a.author_id = p.user_id
+LEFT JOIN categories c ON a.category_id = c.id
+JOIN article_tags at ON a.id = at.article_id
+JOIN tags t ON at.tag_id = t.id
+WHERE a.status = 'published' AND a.deleted_at IS NULL AND t.slug = $1
+ORDER BY a.published_at DESC
+LIMIT $2 OFFSET $3;
+
+-- name: CountArticlesByTag :one
+SELECT COUNT(*) FROM articles a
+JOIN article_tags at ON a.id = at.article_id
+JOIN tags t ON at.tag_id = t.id
+WHERE a.status = 'published' AND a.deleted_at IS NULL AND t.slug = $1;
+
+-- name: ListArticlesByAuthor :many
+SELECT 
+    a.id, a.author_id, a.category_id, a.title, a.slug, a.subtitle, a.cover_image_url,
+    a.reading_time_minutes, a.views_count, a.likes_count, a.bookmarks_count, a.comments_count,
+    a.featured, a.published_at, a.created_at,
+    p.username as author_username, p.display_name as author_display_name, p.avatar_url as author_avatar_url,
+    c.name as category_name, c.slug as category_slug
+FROM articles a
+JOIN profiles p ON a.author_id = p.user_id
+LEFT JOIN categories c ON a.category_id = c.id
+WHERE a.status = 'published' AND a.deleted_at IS NULL AND p.username = $1
+ORDER BY a.published_at DESC
+LIMIT $2 OFFSET $3;
+
+-- name: CountArticlesByAuthor :one
+SELECT COUNT(*) FROM articles a
+JOIN profiles p ON a.author_id = p.user_id
+WHERE a.status = 'published' AND a.deleted_at IS NULL AND p.username = $1;
+
+-- name: SearchPublishedArticles :many
+SELECT 
+    a.id, a.author_id, a.category_id, a.title, a.slug, a.subtitle, a.cover_image_url,
+    a.reading_time_minutes, a.views_count, a.likes_count, a.bookmarks_count, a.comments_count,
+    a.featured, a.published_at, a.created_at,
+    p.username as author_username, p.display_name as author_display_name, p.avatar_url as author_avatar_url,
+    c.name as category_name, c.slug as category_slug,
+    ts_rank(a.search_vector, plainto_tsquery('english', $1)) as rank
+FROM articles a
+JOIN profiles p ON a.author_id = p.user_id
+LEFT JOIN categories c ON a.category_id = c.id
+WHERE a.status = 'published' AND a.deleted_at IS NULL
+  AND (a.search_vector @@ plainto_tsquery('english', $1) OR a.title ILIKE '%' || $1 || '%')
+ORDER BY rank DESC, a.published_at DESC
+LIMIT $2 OFFSET $3;
+
+-- name: CountSearchPublishedArticles :one
+SELECT COUNT(*) FROM articles a
+WHERE a.status = 'published' AND a.deleted_at IS NULL
+  AND (a.search_vector @@ plainto_tsquery('english', $1) OR a.title ILIKE '%' || $1 || '%');
 
 -- name: IncrementArticleViews :exec
 UPDATE articles

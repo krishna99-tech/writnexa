@@ -63,3 +63,16 @@ SET
     updated_at = NOW()
 WHERE user_id = $1;
 
+-- name: ListPublicAuthors :many
+SELECT p.*, u.role, u.status
+FROM profiles p
+JOIN users u ON p.user_id = u.id
+WHERE u.status = 'active' AND u.deleted_at IS NULL
+ORDER BY p.article_count DESC, p.follower_count DESC, p.created_at ASC
+LIMIT $1 OFFSET $2;
+
+-- name: CountPublicAuthors :one
+SELECT COUNT(*) FROM profiles p
+JOIN users u ON p.user_id = u.id
+WHERE u.status = 'active' AND u.deleted_at IS NULL;
+

@@ -27,11 +27,23 @@ export function Navbar() {
 
           <nav className="hidden md:flex items-center gap-5 text-sm font-medium text-zinc-400">
             <Link
-              href="/"
+              href="/explore"
               className="flex items-center gap-1.5 hover:text-zinc-100 transition-colors"
             >
               <BookOpen className="w-4 h-4" />
-              <span>Explorer</span>
+              <span>Explore</span>
+            </Link>
+            <Link
+              href="/topics"
+              className="hover:text-zinc-100 transition-colors"
+            >
+              <span>Topics</span>
+            </Link>
+            <Link
+              href="/authors"
+              className="hover:text-zinc-100 transition-colors"
+            >
+              <span>Authors</span>
             </Link>
             <Link
               href="/studio"

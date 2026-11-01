@@ -91,3 +91,4 @@ ON CONFLICT (user_id) DO UPDATE SET
     email_on_article_publish = EXCLUDED.email_on_article_publish,
     updated_at = NOW()
 RETURNING *;
+

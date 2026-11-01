@@ -56,3 +56,4 @@ DROP TABLE IF EXISTS notification_preferences CASCADE;
 DROP TABLE IF EXISTS email_logs CASCADE;
 DROP TABLE IF EXISTS email_outbox CASCADE;
 -- +goose StatementEnd
+

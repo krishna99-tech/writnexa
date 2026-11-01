@@ -204,3 +204,4 @@ New AWS SES accounts start in the **Sandbox Environment**, where:
 | `password_changed` | `Security Alert: Your QUORIX password was changed` | Password reset or changed | Yes |
 | `new_follower` | `@{follower} started following you on QUORIX` | New author follower | Yes (Respects prefs) |
 | `new_comment` | `New comment from @{user} on "{article}"` | New discussion comment | Yes (Respects prefs) |
+

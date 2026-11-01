@@ -19,6 +19,7 @@ import (
 	"github.com/quorix/quorix-backend/internal/logger"
 	"github.com/quorix/quorix-backend/internal/middleware"
 	"github.com/quorix/quorix-backend/internal/modules/auth"
+	"github.com/quorix/quorix-backend/internal/modules/content"
 	"github.com/quorix/quorix-backend/internal/modules/email"
 	"github.com/quorix/quorix-backend/internal/redis"
 	"github.com/quorix/quorix-backend/internal/response"
@@ -108,6 +109,10 @@ func main() {
 	authSvc.SetEmailEnqueuer(email.NewAuthEnqueuerAdapter(emailSvc))
 	authHandler := auth.NewHandler(authSvc, cfg)
 
+	// Public Explorer & Content Module
+	contentSvc := content.NewService(db, queries)
+	contentHandler := content.NewHandler(contentSvc)
+
 	// Root health endpoints
 	router.GET("/health", healthHandler.Check)
 
@@ -122,6 +127,7 @@ func main() {
 			})
 		})
 
+		content.RegisterRoutes(v1, contentHandler)
 		email.RegisterRoutes(v1, emailHandler, cfg)
 		auth.RegisterRoutes(v1, authHandler, cfg)
 	}
