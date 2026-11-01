@@ -266,7 +266,7 @@ func (s *service) GetPlatformAnalytics(ctx context.Context, rangeStr string, cus
 		return nil, err
 	}
 
-	var timeseries []MetricTimeseriesPoint
+	timeseries := make([]MetricTimeseriesPoint, 0)
 	for _, row := range tsRows {
 		timeseries = append(timeseries, MetricTimeseriesPoint{
 			Date:           row.Day.Time.Format("2006-01-02"),
@@ -285,7 +285,7 @@ func (s *service) GetPlatformAnalytics(ctx context.Context, rangeStr string, cus
 		return nil, err
 	}
 
-	var trafficSources []TrafficSourceBreakdown
+	trafficSources := make([]TrafficSourceBreakdown, 0)
 	for _, r := range sourceRows {
 		trafficSources = append(trafficSources, TrafficSourceBreakdown{
 			Source:     r.Source,
@@ -303,7 +303,7 @@ func (s *service) GetPlatformAnalytics(ctx context.Context, rangeStr string, cus
 		return nil, err
 	}
 
-	var topCategories []TopCategoryMetric
+	topCategories := make([]TopCategoryMetric, 0)
 	for _, c := range catRows {
 		topCategories = append(topCategories, TopCategoryMetric{
 			ID:            uuid.UUID(c.ID.Bytes).String(),
@@ -323,7 +323,7 @@ func (s *service) GetPlatformAnalytics(ctx context.Context, rangeStr string, cus
 		return nil, err
 	}
 
-	var topArticles []TopArticleMetric
+	topArticles := make([]TopArticleMetric, 0)
 	for _, a := range artRows {
 		topArticles = append(topArticles, TopArticleMetric{
 			ID:                uuid.UUID(a.ID.Bytes).String(),
@@ -385,7 +385,7 @@ func (s *service) GetAuthorAnalytics(ctx context.Context, authorID uuid.UUID, ra
 		return nil, err
 	}
 
-	var timeseries []MetricTimeseriesPoint
+	timeseries := make([]MetricTimeseriesPoint, 0)
 	for _, row := range tsRows {
 		timeseries = append(timeseries, MetricTimeseriesPoint{
 			Date:           row.Day.Time.Format("2006-01-02"),
@@ -404,7 +404,7 @@ func (s *service) GetAuthorAnalytics(ctx context.Context, authorID uuid.UUID, ra
 		return nil, err
 	}
 
-	var trafficSources []TrafficSourceBreakdown
+	trafficSources := make([]TrafficSourceBreakdown, 0)
 	for _, r := range sourceRows {
 		trafficSources = append(trafficSources, TrafficSourceBreakdown{
 			Source:     r.Source,
@@ -423,7 +423,7 @@ func (s *service) GetAuthorAnalytics(ctx context.Context, authorID uuid.UUID, ra
 		return nil, err
 	}
 
-	var articles []AuthorArticlePerformanceItem
+	articles := make([]AuthorArticlePerformanceItem, 0)
 	for _, a := range artRows {
 		var pubAt *time.Time
 		if a.PublishedAt.Valid {

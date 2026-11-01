@@ -49,3 +49,7 @@ Thumbs.db
 coverage/
 *.out
 
+# SSL Certificates & Private Keys
+docker/nginx/ssl/*.crt
+docker/nginx/ssl/*.key
+

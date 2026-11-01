@@ -81,3 +81,4 @@ The frontend is built on Next.js 16 with the App Router, React Server Components
 2. **PostgreSQL Full-Text Search**: Articles utilize weighted `tsvector` columns with English dictionaries (`A` for title, `B` for subtitle, `C` for content) and GIN indexes, avoiding external search cluster complexity.
 3. **Privacy-Preserving Telemetry**: Visitor tracking hashes client IP and User-Agent with a daily rotating salt via SHA-256, strictly adhering to user privacy requirements.
 4. **Resilient Background Processing**: Operations monitoring tracks worker health, connection pool metrics, memory pressure, and provides admin endpoints for retrying failed outbox jobs.
+

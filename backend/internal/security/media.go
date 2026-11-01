@@ -134,3 +134,4 @@ func ValidateRemoteImageURL(rawURL string) error {
 
 	return nil
 }
+

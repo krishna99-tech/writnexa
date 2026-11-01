@@ -108,7 +108,7 @@ export default function AdminAnalyticsPage() {
                   <Eye className="w-4 h-4 text-emerald-400" />
                 </div>
                 <div className="text-3xl font-bold font-mono text-zinc-100">
-                  {data.total_page_views.toLocaleString()}
+                  {(data.total_page_views || 0).toLocaleString()}
                 </div>
                 <div className="text-[11px] font-mono text-zinc-500">
                   Across all public & studio routes
@@ -124,7 +124,7 @@ export default function AdminAnalyticsPage() {
                   <BookOpen className="w-4 h-4 text-sky-400" />
                 </div>
                 <div className="text-3xl font-bold font-mono text-zinc-100">
-                  {data.total_article_views.toLocaleString()}
+                  {(data.total_article_views || 0).toLocaleString()}
                 </div>
                 <div className="text-[11px] font-mono text-zinc-500">
                   Technical publications read
@@ -140,7 +140,7 @@ export default function AdminAnalyticsPage() {
                   <Users className="w-4 h-4 text-purple-400" />
                 </div>
                 <div className="text-3xl font-bold font-mono text-zinc-100">
-                  {data.unique_visitors.toLocaleString()}
+                  {(data.unique_visitors || 0).toLocaleString()}
                 </div>
                 <div className="text-[11px] font-mono text-zinc-500">
                   De-duplicated privacy hashes
@@ -156,7 +156,7 @@ export default function AdminAnalyticsPage() {
                   <UserPlus className="w-4 h-4 text-amber-400" />
                 </div>
                 <div className="text-3xl font-bold font-mono text-zinc-100">
-                  {data.new_registrations.toLocaleString()}
+                  {(data.new_registrations || 0).toLocaleString()}
                 </div>
                 <div className="text-[11px] font-mono text-zinc-500">
                   In selected {data.range} period
@@ -178,18 +178,18 @@ export default function AdminAnalyticsPage() {
                 </p>
               </div>
               <span className="text-xs font-mono text-zinc-500">
-                {data.timeseries.length} days recorded
+                {(data.timeseries || []).length} days recorded
               </span>
             </div>
 
-            {data.timeseries.length === 0 ? (
+            {(!data.timeseries || data.timeseries.length === 0) ? (
               <p className="text-xs font-mono text-zinc-500 py-6 text-center">
                 No activity data for this time range yet.
               </p>
             ) : (
               <div className="space-y-2 pt-2">
                 <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2">
-                  {data.timeseries.slice(-14).map((point) => (
+                  {(data.timeseries || []).slice(-14).map((point) => (
                     <div
                       key={point.date}
                       className="p-3 rounded-lg bg-zinc-950 border border-zinc-800/80 text-center space-y-1"
@@ -224,24 +224,24 @@ export default function AdminAnalyticsPage() {
                 </p>
               </div>
 
-              {data.traffic_sources.length === 0 ? (
+              {(!data.traffic_sources || data.traffic_sources.length === 0) ? (
                 <p className="text-xs font-mono text-zinc-500 py-6 text-center">
                   No source data recorded yet.
                 </p>
               ) : (
                 <div className="space-y-3 pt-2">
-                  {data.traffic_sources.map((src) => (
+                  {(data.traffic_sources || []).map((src) => (
                     <div key={src.source} className="space-y-1">
                       <div className="flex items-center justify-between text-xs font-mono">
                         <span className="capitalize text-zinc-300 font-semibold">{src.source}</span>
                         <span className="text-zinc-400">
-                          {src.count.toLocaleString()} visits ({src.percentage}%)
+                          {(src.count || 0).toLocaleString()} visits ({src.percentage || 0}%)
                         </span>
                       </div>
                       <div className="w-full h-2 rounded-full bg-zinc-800 overflow-hidden">
                         <div
                           className="h-full bg-sky-500 rounded-full transition-all"
-                          style={{ width: `${Math.min(100, Math.max(5, src.percentage))}%` }}
+                          style={{ width: `${Math.min(100, Math.max(5, src.percentage || 0))}%` }}
                         />
                       </div>
                     </div>
@@ -262,13 +262,13 @@ export default function AdminAnalyticsPage() {
                 </p>
               </div>
 
-              {data.top_categories.length === 0 ? (
+              {(!data.top_categories || data.top_categories.length === 0) ? (
                 <p className="text-xs font-mono text-zinc-500 py-6 text-center">
                   No category reads recorded in this interval.
                 </p>
               ) : (
                 <div className="space-y-2 pt-2">
-                  {data.top_categories.map((c) => (
+                  {(data.top_categories || []).map((c) => (
                     <div
                       key={c.id}
                       className="p-3 rounded-lg bg-zinc-950 border border-zinc-800 flex items-center justify-between text-xs font-mono"
@@ -300,7 +300,7 @@ export default function AdminAnalyticsPage() {
               </p>
             </div>
 
-            {data.top_articles.length === 0 ? (
+            {(!data.top_articles || data.top_articles.length === 0) ? (
               <p className="text-xs font-mono text-zinc-500 py-6 text-center">
                 No article reads recorded in this window.
               </p>
@@ -316,7 +316,7 @@ export default function AdminAnalyticsPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-800/60">
-                    {data.top_articles.map((art) => (
+                    {(data.top_articles || []).map((art) => (
                       <tr key={art.id} className="hover:bg-zinc-900/50 transition-colors">
                         <td className="py-3 px-4">
                           <Link
@@ -332,10 +332,10 @@ export default function AdminAnalyticsPage() {
                           @{art.author_username}
                         </td>
                         <td className="py-3 px-4 text-right font-bold text-emerald-400">
-                          {art.views_count.toLocaleString()}
+                          {(art.views_count || 0).toLocaleString()}
                         </td>
                         <td className="py-3 px-4 text-right text-zinc-300">
-                          {art.unique_visitors.toLocaleString()}
+                          {(art.unique_visitors || 0).toLocaleString()}
                         </td>
                       </tr>
                     ))}

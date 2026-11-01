@@ -110,7 +110,7 @@ export default function StudioAnalyticsPage() {
                   <Eye className="w-4 h-4 text-emerald-400" />
                 </div>
                 <div className="text-3xl font-bold font-mono text-zinc-100">
-                  {data.total_views.toLocaleString()}
+                  {(data.total_views || 0).toLocaleString()}
                 </div>
                 <div className="text-[11px] font-mono text-zinc-500">
                   In {data.range} interval
@@ -126,7 +126,7 @@ export default function StudioAnalyticsPage() {
                   <Users className="w-4 h-4 text-sky-400" />
                 </div>
                 <div className="text-3xl font-bold font-mono text-zinc-100">
-                  {data.unique_visitors.toLocaleString()}
+                  {(data.unique_visitors || 0).toLocaleString()}
                 </div>
                 <div className="text-[11px] font-mono text-zinc-500">
                   Salted cryptographic visitor hashes
@@ -142,7 +142,7 @@ export default function StudioAnalyticsPage() {
                   <TrendingUp className="w-4 h-4 text-amber-400" />
                 </div>
                 <div className="text-3xl font-bold font-mono text-zinc-100">
-                  {data.engagement_rate.toFixed(1)}%
+                  {(data.engagement_rate || 0).toFixed(1)}%
                 </div>
                 <div className="text-[11px] font-mono text-zinc-500">
                   Reactions & feedback per read
@@ -159,13 +159,13 @@ export default function StudioAnalyticsPage() {
                 </div>
                 <div className="text-2xl font-bold font-mono text-zinc-100 flex items-center gap-3">
                   <span className="flex items-center gap-1 text-sm text-rose-400 font-normal">
-                    <Heart className="w-3.5 h-3.5 fill-rose-400/20" /> {data.total_likes}
+                    <Heart className="w-3.5 h-3.5 fill-rose-400/20" /> {data.total_likes || 0}
                   </span>
                   <span className="flex items-center gap-1 text-sm text-amber-400 font-normal">
-                    <Bookmark className="w-3.5 h-3.5 fill-amber-400/20" /> {data.total_bookmarks}
+                    <Bookmark className="w-3.5 h-3.5 fill-amber-400/20" /> {data.total_bookmarks || 0}
                   </span>
                   <span className="flex items-center gap-1 text-sm text-cyan-400 font-normal">
-                    <MessageSquare className="w-3.5 h-3.5" /> {data.total_comments}
+                    <MessageSquare className="w-3.5 h-3.5" /> {data.total_comments || 0}
                   </span>
                 </div>
                 <div className="text-[11px] font-mono text-zinc-500">
@@ -188,18 +188,18 @@ export default function StudioAnalyticsPage() {
                 </p>
               </div>
               <span className="text-xs font-mono text-zinc-500">
-                {data.timeseries.length} days recorded
+                {(data.timeseries || []).length} days recorded
               </span>
             </div>
 
-            {data.timeseries.length === 0 ? (
+            {(!data.timeseries || data.timeseries.length === 0) ? (
               <p className="text-xs font-mono text-zinc-500 py-6 text-center">
                 No activity data for this time range yet.
               </p>
             ) : (
               <div className="space-y-2 pt-2">
                 <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2">
-                  {data.timeseries.slice(-14).map((point) => (
+                  {(data.timeseries || []).slice(-14).map((point) => (
                     <div
                       key={point.date}
                       className="p-3 rounded-lg bg-zinc-950 border border-zinc-800/80 text-center space-y-1"
@@ -234,24 +234,24 @@ export default function StudioAnalyticsPage() {
                 </p>
               </div>
 
-              {data.traffic_sources.length === 0 ? (
+              {(!data.traffic_sources || data.traffic_sources.length === 0) ? (
                 <p className="text-xs font-mono text-zinc-500 py-6 text-center">
                   No source data recorded yet.
                 </p>
               ) : (
                 <div className="space-y-3 pt-2">
-                  {data.traffic_sources.map((src) => (
+                  {(data.traffic_sources || []).map((src) => (
                     <div key={src.source} className="space-y-1">
                       <div className="flex items-center justify-between text-xs font-mono">
                         <span className="capitalize text-zinc-300 font-semibold">{src.source}</span>
                         <span className="text-zinc-400">
-                          {src.count.toLocaleString()} visits ({src.percentage}%)
+                          {(src.count || 0).toLocaleString()} visits ({src.percentage || 0}%)
                         </span>
                       </div>
                       <div className="w-full h-2 rounded-full bg-zinc-800 overflow-hidden">
                         <div
                           className="h-full bg-sky-500 rounded-full transition-all"
-                          style={{ width: `${Math.min(100, Math.max(5, src.percentage))}%` }}
+                          style={{ width: `${Math.min(100, Math.max(5, src.percentage || 0))}%` }}
                         />
                       </div>
                     </div>
@@ -296,7 +296,7 @@ export default function StudioAnalyticsPage() {
               </div>
 
               <div className="text-[11px] font-mono text-zinc-500 pt-2 border-t border-zinc-800/60 flex items-center justify-between">
-                <span>Range: {data.start_date.split("T")[0]} to {data.end_date.split("T")[0]}</span>
+                <span>Range: {data.start_date?.split("T")[0] ?? ""} to {data.end_date?.split("T")[0] ?? ""}</span>
                 <span className="text-emerald-400 flex items-center gap-1">
                   <Sparkles className="w-3 h-3" /> Live Telemetry
                 </span>
@@ -317,11 +317,11 @@ export default function StudioAnalyticsPage() {
                 </p>
               </div>
               <Badge variant="outline" className="text-xs font-mono text-zinc-400 border-zinc-700">
-                {data.articles.length} Published Articles
+                {(data.articles || []).length} Published Articles
               </Badge>
             </div>
 
-            {data.articles.length === 0 ? (
+            {(!data.articles || data.articles.length === 0) ? (
               <div className="py-12 text-center space-y-3">
                 <p className="text-sm font-mono text-zinc-500">
                   No published articles found for your author profile.
@@ -348,7 +348,7 @@ export default function StudioAnalyticsPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-zinc-800/60 font-mono text-xs">
-                    {data.articles.map((art) => (
+                    {(data.articles || []).map((art) => (
                       <tr key={art.id} className="hover:bg-zinc-800/30 transition-colors">
                         <td className="py-3 px-4">
                           <div className="font-semibold text-zinc-200 line-clamp-1">
@@ -384,16 +384,16 @@ export default function StudioAnalyticsPage() {
                           </span>
                         </td>
                         <td className="py-3 px-4 text-right font-bold text-zinc-100">
-                          {art.views_count.toLocaleString()}
+                          {(art.views_count || 0).toLocaleString()}
                         </td>
                         <td className="py-3 px-4 text-right text-sky-400">
-                          {art.unique_visitors.toLocaleString()}
+                          {(art.unique_visitors || 0).toLocaleString()}
                         </td>
                         <td className="py-3 px-4 text-right text-rose-400">
-                          {art.likes_count.toLocaleString()}
+                          {(art.likes_count || 0).toLocaleString()}
                         </td>
                         <td className="py-3 px-4 text-right text-amber-400">
-                          {art.bookmarks_count.toLocaleString()}
+                          {(art.bookmarks_count || 0).toLocaleString()}
                         </td>
                         <td className="py-3 px-4 text-center">
                           <Link href={`/studio/articles/${art.id}/edit`}>

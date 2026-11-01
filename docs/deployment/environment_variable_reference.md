@@ -79,3 +79,4 @@ This document provides a comprehensive specification of every environment variab
 |---|---|---|---|
 | `NEXT_PUBLIC_API_URL` | string (URL) | `https://api.quorix.io` or `https://quorix.io` | Client-facing base URL for browser API requests. |
 | `INTERNAL_API_URL` | string (URL) | `http://backend:8080` | Internal Docker network URL for server-side Next.js data fetching. |
+

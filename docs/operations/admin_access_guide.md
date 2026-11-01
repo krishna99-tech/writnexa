@@ -84,3 +84,4 @@ The seed script also provisions demonstration author accounts for testing writin
    docker exec -it quorix-postgres-prod psql -U quorix_admin -d quorix_prod
    ```
    Execute an update with a newly generated Argon2id password hash.
+

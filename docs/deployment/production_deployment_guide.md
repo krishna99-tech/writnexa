@@ -100,3 +100,4 @@ docker compose -f docker-compose.prod.yml ps
 3. **Frontend SSR**: `curl -I https://quorix.io` -> `HTTP/2 200`
 4. **HSTS Header**: `Strict-Transport-Security: max-age=63072000; includeSubDomains; preload`
 5. **Security Headers**: `X-Frame-Options: SAMEORIGIN`, `X-Content-Type-Options: nosniff`
+

@@ -50,3 +50,4 @@ This checklist validates the security posture of the QUORIX platform prior to pr
 - [x] **Zero Secret Leakage**: Passwords, hashes, AWS credentials, and session tokens are stripped from logs and error payloads.
 - [x] **Structured Logging**: `slog` with correlation `X-Request-ID` attached to every inbound HTTP transaction.
 - [x] **Health Check Protection**: Public health probes return coarse liveness; granular operational metrics and worker failure queues require authenticated `admin` privileges.
+
