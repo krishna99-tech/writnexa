@@ -2,7 +2,7 @@
 # QUORIX Go Backend - Development Dockerfile
 # ==============================================================================
 
-FROM golang:1.23-alpine
+FROM golang:alpine
 
 WORKDIR /app
 
