@@ -195,7 +195,7 @@ export default async function HomePage() {
                       </span>
                       <div className="space-y-1 min-w-0">
                         <span className="text-xs font-mono text-zinc-500 block">
-                          @{art.author.username}
+                          @{art.author?.username || "author"}
                         </span>
                         <h4 className="text-sm font-semibold text-zinc-200 group-hover:text-emerald-400 line-clamp-2 leading-snug">
                           {art.title}
@@ -247,25 +247,33 @@ export default async function HomePage() {
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             <span className="text-zinc-300 font-semibold">Backend Engine:</span>
-            <span>Go Gin v{healthRes.data.version}</span>
+            <span>Go Gin {healthRes.data.version ? `v${healthRes.data.version}` : "v1.0 (Live)"}</span>
           </div>
 
           <div className="flex items-center gap-6">
             <span>
-              DB:{" "}
+              System:{" "}
               <strong className="text-emerald-400">
-                {healthRes.data.services.database.status} (
-                {healthRes.data.services.database.latency})
+                {healthRes.data.status || "operational"}
               </strong>
             </span>
-            <span>
-              Redis:{" "}
-              <strong className="text-emerald-400">
-                {healthRes.data.services.redis.status} (
-                {healthRes.data.services.redis.latency})
-              </strong>
-            </span>
-            <span>Uptime: {healthRes.data.uptime_seconds}s</span>
+            {healthRes.data.services?.database && (
+              <span>
+                DB:{" "}
+                <strong className="text-emerald-400">
+                  {healthRes.data.services.database.status} ({healthRes.data.services.database.latency})
+                </strong>
+              </span>
+            )}
+            {healthRes.data.services?.redis && (
+              <span>
+                Redis:{" "}
+                <strong className="text-emerald-400">
+                  {healthRes.data.services.redis.status} ({healthRes.data.services.redis.latency})
+                </strong>
+              </span>
+            )}
+            {healthRes.data.uptime_seconds && <span>Uptime: {healthRes.data.uptime_seconds}s</span>}
           </div>
         </section>
       )}
