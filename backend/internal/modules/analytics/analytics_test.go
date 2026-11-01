@@ -166,3 +166,4 @@ func TestAnalytics_DateRangeCustomFiltering(t *testing.T) {
 	assert.NotNil(t, resCustom)
 	assert.True(t, resCustom.StartDate.Equal(startCustom))
 }
+

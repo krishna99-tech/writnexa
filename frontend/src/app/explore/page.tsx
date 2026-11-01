@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { fetchArticles, fetchCategories } from "@/lib/api";
 import { ArticleCard } from "@/components/article-card";
+import { AdPlacement } from "@/components/ad-placement";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -160,6 +161,9 @@ export default async function ExplorePage({
           })}
         </div>
       </div>
+
+      {/* Explore Feed Advertisement Placement */}
+      <AdPlacement slotKey="explore_feed" className="my-6" />
 
       {/* Article Grid */}
       {articles.length > 0 ? (

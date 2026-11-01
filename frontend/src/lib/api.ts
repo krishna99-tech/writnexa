@@ -1547,3 +1547,376 @@ export async function fetchAuthorAnalytics(
     return { success: false, error: { code: "FETCH_FAILED", message: error?.message || "Failed to fetch author analytics" } };
   }
 }
+
+// --------------------------------------------------------------------------
+// Phase 12: Advertisement Management Telemetry & Operations
+// --------------------------------------------------------------------------
+
+export interface AdPayload {
+  provider: string; // direct, adsense, disabled
+  slot_key: string;
+  format: string;
+  campaign_id?: string;
+  sponsor_label?: string;
+  headline?: string;
+  body?: string;
+  cta_text?: string;
+  target_url?: string;
+  image_url?: string;
+  adsense_client_id?: string;
+  adsense_slot_id?: string;
+  is_test_mode: boolean;
+}
+
+export interface AdPlacementResponse {
+  placement_id: string;
+  slot_key: string;
+  name: string;
+  page_type: string;
+  provider: string;
+  is_enabled: boolean;
+  format: string;
+  frequency_cap: number;
+  payload?: AdPayload;
+}
+
+export interface AdPlacementItem {
+  id: string;
+  slot_key: string;
+  name: string;
+  page_type: string;
+  provider: string;
+  is_enabled: boolean;
+  format: string;
+  frequency_cap: number;
+  config: any;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AdCampaignItem {
+  id: string;
+  name: string;
+  advertiser: string;
+  sponsor_label: string;
+  headline: string;
+  body: string;
+  cta_text: string;
+  target_url: string;
+  image_url: string;
+  format: string;
+  placements: string[];
+  status: string;
+  cpm: number;
+  cpc: number;
+  start_date: string;
+  end_date?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AdTimeseriesPoint {
+  date: string;
+  impressions: number;
+  clicks: number;
+}
+
+export interface AdPlacementStatItem {
+  placement_id: string;
+  slot_key: string;
+  name: string;
+  page_type: string;
+  provider: string;
+  is_enabled: boolean;
+  impressions: number;
+  clicks: number;
+  ctr_percentage: number;
+}
+
+export interface AdCampaignStatItem {
+  campaign_id: string;
+  name: string;
+  advertiser: string;
+  sponsor_label: string;
+  status: string;
+  cpm: number;
+  cpc: number;
+  impressions: number;
+  clicks: number;
+  ctr_percentage: number;
+  estimated_revenue: number;
+}
+
+export interface AdAnalyticsResult {
+  range: string;
+  start_date: string;
+  end_date: string;
+  total_impressions: number;
+  total_clicks: number;
+  ctr_percentage: number;
+  estimated_direct_revenue: number;
+  provider_reported_revenue: number;
+  timeseries: AdTimeseriesPoint[];
+  placements: AdPlacementStatItem[];
+  campaigns: AdCampaignStatItem[];
+}
+
+export interface AdErrorLogItem {
+  id: string;
+  placement_key: string;
+  provider: string;
+  error_code: string;
+  error_message: string;
+  url: string;
+  created_at: string;
+}
+
+export async function fetchAdPlacement(
+  slotKey: string
+): Promise<ApiResponse<{ placement: AdPlacementResponse }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/ads/placements/${slotKey}`, {
+      cache: "no-store",
+    });
+    return await res.json();
+  } catch (error: any) {
+    return {
+      success: false,
+      error: { code: "FETCH_FAILED", message: error?.message || "Failed to fetch ad placement" },
+    };
+  }
+}
+
+export async function recordAdImpression(data: {
+  placement_id: string;
+  campaign_id?: string;
+  provider: string;
+  path: string;
+}): Promise<ApiResponse<{ status: string }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/ads/impressions`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+      keepalive: true,
+    });
+    return await res.json();
+  } catch (error: any) {
+    return {
+      success: false,
+      error: { code: "IMPRESSION_FAILED", message: error?.message || "Failed to record impression" },
+    };
+  }
+}
+
+export async function recordAdClick(data: {
+  placement_id: string;
+  campaign_id?: string;
+  provider: string;
+  target_url: string;
+}): Promise<ApiResponse<{ status: string }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/ads/clicks`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+      keepalive: true,
+    });
+    return await res.json();
+  } catch (error: any) {
+    return {
+      success: false,
+      error: { code: "CLICK_FAILED", message: error?.message || "Failed to record click" },
+    };
+  }
+}
+
+export async function recordAdError(data: {
+  placement_key: string;
+  provider: string;
+  error_code: string;
+  error_message: string;
+  url: string;
+}): Promise<ApiResponse<{ status: string }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/ads/errors`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data),
+    });
+    return await res.json();
+  } catch (error: any) {
+    return {
+      success: false,
+      error: { code: "ERROR_LOG_FAILED", message: error?.message || "Failed to log ad error" },
+    };
+  }
+}
+
+// Admin Advertising APIs
+export async function fetchAdminAdPlacements(
+  token: string
+): Promise<ApiResponse<{ placements: AdPlacementItem[] }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/admin/ads/placements`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    return await res.json();
+  } catch (error: any) {
+    return { success: false, error: { code: "FETCH_FAILED", message: error?.message || "Failed to fetch placements" } };
+  }
+}
+
+export async function updateAdminAdPlacement(
+  token: string,
+  id: string,
+  data: Partial<AdPlacementItem>
+): Promise<ApiResponse<{ placement: AdPlacementItem }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/admin/ads/placements/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+    return await res.json();
+  } catch (error: any) {
+    return { success: false, error: { code: "UPDATE_FAILED", message: error?.message || "Failed to update placement" } };
+  }
+}
+
+export async function fetchAdminAdCampaigns(
+  token: string
+): Promise<ApiResponse<{ campaigns: AdCampaignItem[] }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/admin/ads/campaigns`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    return await res.json();
+  } catch (error: any) {
+    return { success: false, error: { code: "FETCH_FAILED", message: error?.message || "Failed to fetch campaigns" } };
+  }
+}
+
+export async function createAdminAdCampaign(
+  token: string,
+  data: any
+): Promise<ApiResponse<{ campaign: AdCampaignItem }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/admin/ads/campaigns`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+    return await res.json();
+  } catch (error: any) {
+    return { success: false, error: { code: "CREATE_FAILED", message: error?.message || "Failed to create campaign" } };
+  }
+}
+
+export async function updateAdminAdCampaign(
+  token: string,
+  id: string,
+  data: any
+): Promise<ApiResponse<{ campaign: AdCampaignItem }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/admin/ads/campaigns/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+    return await res.json();
+  } catch (error: any) {
+    return { success: false, error: { code: "UPDATE_FAILED", message: error?.message || "Failed to update campaign" } };
+  }
+}
+
+export async function deleteAdminAdCampaign(
+  token: string,
+  id: string
+): Promise<ApiResponse<{ message: string }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/admin/ads/campaigns/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return await res.json();
+  } catch (error: any) {
+    return { success: false, error: { code: "DELETE_FAILED", message: error?.message || "Failed to delete campaign" } };
+  }
+}
+
+export async function fetchAdminAdAnalytics(
+  token: string,
+  params: { range?: string; from?: string; to?: string }
+): Promise<ApiResponse<{ analytics: AdAnalyticsResult }>> {
+  try {
+    const qp = new URLSearchParams();
+    if (params.range) qp.set("range", params.range);
+    if (params.from) qp.set("from", params.from);
+    if (params.to) qp.set("to", params.to);
+
+    const res = await fetch(`${API_BASE_URL}/api/v1/admin/ads/analytics?${qp.toString()}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    return await res.json();
+  } catch (error: any) {
+    return { success: false, error: { code: "FETCH_FAILED", message: error?.message || "Failed to fetch ad analytics" } };
+  }
+}
+
+export async function fetchAdminAdErrors(
+  token: string,
+  params?: { limit?: number; offset?: number }
+): Promise<ApiResponse<{ errors: AdErrorLogItem[] }>> {
+  try {
+    const qp = new URLSearchParams();
+    if (params?.limit) qp.set("limit", params.limit.toString());
+    if (params?.offset) qp.set("offset", params.offset.toString());
+
+    const res = await fetch(`${API_BASE_URL}/api/v1/admin/ads/errors?${qp.toString()}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    return await res.json();
+  } catch (error: any) {
+    return { success: false, error: { code: "FETCH_FAILED", message: error?.message || "Failed to fetch ad errors" } };
+  }
+}
+
+export async function recordAdminProviderRevenue(
+  token: string,
+  data: {
+    provider: string;
+    date: string;
+    reported_impressions: number;
+    reported_clicks: number;
+    reported_revenue: number;
+    currency?: string;
+  }
+): Promise<ApiResponse<{ provider_revenue: any }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/admin/ads/provider-revenue`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+    return await res.json();
+  } catch (error: any) {
+    return { success: false, error: { code: "SAVE_FAILED", message: error?.message || "Failed to record provider revenue" } };
+  }
+}

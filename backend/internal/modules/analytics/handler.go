@@ -130,3 +130,4 @@ func (h *Handler) GetAuthorAnalytics(c *gin.Context) {
 		"analytics": result,
 	})
 }
+

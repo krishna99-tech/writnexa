@@ -22,6 +22,7 @@ import {
 } from "@/components/article-interactions";
 import { FollowButton } from "@/components/follow-button";
 import { AnalyticsTracker } from "@/components/analytics-tracker";
+import { AdPlacement } from "@/components/ad-placement";
 
 export const revalidate = 30;
 
@@ -211,6 +212,9 @@ export default async function ArticleDetailPage({
         )}
       </section>
 
+      {/* In-Content Non-Intrusive Sponsored Placement */}
+      <AdPlacement slotKey="article_in_content" className="my-8" />
+
       {/* Tags Section */}
       {article.tags && article.tags.length > 0 && (
         <div className="pt-6 border-t border-zinc-800 flex flex-wrap items-center gap-2">
@@ -244,6 +248,9 @@ export default async function ArticleDetailPage({
         articleId={article.id}
         articleSlug={article.slug}
       />
+
+      {/* Article Sponsored Partner Placement */}
+      <AdPlacement slotKey="article_sidebar" className="my-8" />
 
       {/* Bottom Author Shelf */}
       <div className="p-6 rounded-xl border border-zinc-800 bg-zinc-900/40 flex items-start gap-4">

@@ -62,3 +62,4 @@ CREATE TABLE IF NOT EXISTS platform_daily_metrics (
 DROP TABLE IF EXISTS platform_daily_metrics;
 DROP TABLE IF EXISTS article_daily_metrics;
 DROP TABLE IF EXISTS analytics_events;
+

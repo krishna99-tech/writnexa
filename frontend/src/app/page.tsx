@@ -9,6 +9,7 @@ import {
 } from "@/lib/api";
 import { ArticleCard } from "@/components/article-card";
 import { AuthorCard } from "@/components/author-card";
+import { AdPlacement } from "@/components/ad-placement";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -99,6 +100,9 @@ export default async function HomePage() {
           ))}
         </div>
       </section>
+
+      {/* Homepage Top Advertisement Placement */}
+      <AdPlacement slotKey="homepage_top" className="my-8" />
 
       {/* Featured Section */}
       {featured.length > 0 && (

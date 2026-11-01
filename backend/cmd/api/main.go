@@ -19,6 +19,7 @@ import (
 	"github.com/quorix/quorix-backend/internal/logger"
 	"github.com/quorix/quorix-backend/internal/middleware"
 	"github.com/quorix/quorix-backend/internal/modules/admin"
+	"github.com/quorix/quorix-backend/internal/modules/ads"
 	"github.com/quorix/quorix-backend/internal/modules/analytics"
 	"github.com/quorix/quorix-backend/internal/modules/auth"
 	"github.com/quorix/quorix-backend/internal/modules/community"
@@ -138,6 +139,11 @@ func main() {
 	analyticsSvc := analytics.NewService(db, queries)
 	analyticsHandler := analytics.NewHandler(analyticsSvc)
 
+	// Modular Advertising Management Module
+	adsRegistry := ads.NewProviderRegistry(queries)
+	adsSvc := ads.NewService(queries, adsRegistry)
+	adsHandler := ads.NewHandler(adsSvc)
+
 	// Root health endpoints
 	router.GET("/health", healthHandler.Check)
 
@@ -158,6 +164,7 @@ func main() {
 		community.RegisterRoutes(v1, communityHandler, cfg)
 		admin.RegisterRoutes(v1, adminHandler, cfg)
 		analytics.RegisterRoutes(v1, analyticsHandler, cfg)
+		ads.RegisterRoutes(v1, adsHandler, cfg)
 		email.RegisterRoutes(v1, emailHandler, cfg)
 		auth.RegisterRoutes(v1, authHandler, cfg)
 	}

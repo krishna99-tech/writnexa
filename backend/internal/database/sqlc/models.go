@@ -10,6 +10,83 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type AdCampaign struct {
+	ID           pgtype.UUID        `json:"id"`
+	Name         string             `json:"name"`
+	Advertiser   string             `json:"advertiser"`
+	SponsorLabel string             `json:"sponsor_label"`
+	Headline     string             `json:"headline"`
+	Body         string             `json:"body"`
+	CtaText      string             `json:"cta_text"`
+	TargetUrl    string             `json:"target_url"`
+	ImageUrl     string             `json:"image_url"`
+	Format       string             `json:"format"`
+	Placements   []string           `json:"placements"`
+	Status       string             `json:"status"`
+	Cpm          pgtype.Numeric     `json:"cpm"`
+	Cpc          pgtype.Numeric     `json:"cpc"`
+	StartDate    pgtype.Timestamptz `json:"start_date"`
+	EndDate      pgtype.Timestamptz `json:"end_date"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+}
+
+type AdClick struct {
+	ID          pgtype.UUID        `json:"id"`
+	PlacementID pgtype.UUID        `json:"placement_id"`
+	CampaignID  pgtype.UUID        `json:"campaign_id"`
+	Provider    string             `json:"provider"`
+	VisitorHash string             `json:"visitor_hash"`
+	TargetUrl   string             `json:"target_url"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+}
+
+type AdError struct {
+	ID           pgtype.UUID        `json:"id"`
+	PlacementKey string             `json:"placement_key"`
+	Provider     string             `json:"provider"`
+	ErrorCode    string             `json:"error_code"`
+	ErrorMessage string             `json:"error_message"`
+	Url          string             `json:"url"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+}
+
+type AdImpression struct {
+	ID          pgtype.UUID        `json:"id"`
+	PlacementID pgtype.UUID        `json:"placement_id"`
+	CampaignID  pgtype.UUID        `json:"campaign_id"`
+	Provider    string             `json:"provider"`
+	VisitorHash string             `json:"visitor_hash"`
+	Path        string             `json:"path"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+}
+
+type AdPlacement struct {
+	ID           pgtype.UUID        `json:"id"`
+	SlotKey      string             `json:"slot_key"`
+	Name         string             `json:"name"`
+	PageType     string             `json:"page_type"`
+	Provider     string             `json:"provider"`
+	IsEnabled    bool               `json:"is_enabled"`
+	Format       string             `json:"format"`
+	FrequencyCap int32              `json:"frequency_cap"`
+	Config       []byte             `json:"config"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+}
+
+type AdProviderRevenue struct {
+	ID                  pgtype.UUID        `json:"id"`
+	Provider            string             `json:"provider"`
+	Date                pgtype.Date        `json:"date"`
+	ReportedImpressions int32              `json:"reported_impressions"`
+	ReportedClicks      int32              `json:"reported_clicks"`
+	ReportedRevenue     pgtype.Numeric     `json:"reported_revenue"`
+	Currency            string             `json:"currency"`
+	CreatedAt           pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt           pgtype.Timestamptz `json:"updated_at"`
+}
+
 type AdminAuditLog struct {
 	ID         pgtype.UUID        `json:"id"`
 	ActorID    pgtype.UUID        `json:"actor_id"`
