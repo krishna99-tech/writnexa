@@ -25,6 +25,7 @@ import (
 	"github.com/quorix/quorix-backend/internal/modules/community"
 	"github.com/quorix/quorix-backend/internal/modules/content"
 	"github.com/quorix/quorix-backend/internal/modules/email"
+	"github.com/quorix/quorix-backend/internal/modules/operations"
 	"github.com/quorix/quorix-backend/internal/modules/search"
 	"github.com/quorix/quorix-backend/internal/modules/studio"
 	"github.com/quorix/quorix-backend/internal/redis"
@@ -89,6 +90,7 @@ func main() {
 	// 6. Global Middlewares
 	router.Use(middleware.RequestID())
 	router.Use(middleware.Logger())
+	router.Use(middleware.MetricsTelemetryMiddleware())
 	router.Use(middleware.Recovery())
 	router.Use(middleware.CORS(cfg.CORS))
 
@@ -144,8 +146,13 @@ func main() {
 	adsSvc := ads.NewService(queries, adsRegistry)
 	adsHandler := ads.NewHandler(adsSvc)
 
-	// Root health endpoints
-	router.GET("/health", healthHandler.Check)
+	// Platform Operations & Monitoring Module
+	opsSvc := operations.NewService(db, queries, redisClient)
+	opsHandler := operations.NewHandler(opsSvc)
+
+	// Root health & readiness probe endpoints
+	router.GET("/health", opsHandler.Liveness)
+	router.GET("/ready", opsHandler.Readiness)
 
 	// API v1 group
 	v1 := router.Group("/api/v1")
@@ -165,6 +172,7 @@ func main() {
 		admin.RegisterRoutes(v1, adminHandler, cfg)
 		analytics.RegisterRoutes(v1, analyticsHandler, cfg)
 		ads.RegisterRoutes(v1, adsHandler, cfg)
+		operations.RegisterRoutes(v1, opsHandler, cfg)
 		email.RegisterRoutes(v1, emailHandler, cfg)
 		auth.RegisterRoutes(v1, authHandler, cfg)
 	}

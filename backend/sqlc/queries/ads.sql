@@ -245,3 +245,4 @@ RETURNING *;
 SELECT * FROM ad_provider_revenues
 WHERE date >= @start_date::date
 ORDER BY date DESC;
+

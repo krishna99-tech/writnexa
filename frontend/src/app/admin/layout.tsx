@@ -20,10 +20,12 @@ import {
   Building,
   BarChart3,
   Megaphone,
+  Activity,
 } from "lucide-react";
 
 const NAV_ITEMS = [
   { label: "Overview", href: "/admin", icon: LayoutDashboard },
+  { label: "System Operations", href: "/admin/operations", icon: Activity },
   { label: "Platform Analytics", href: "/admin/analytics", icon: BarChart3 },
   { label: "Advertisements", href: "/admin/ads", icon: Megaphone },
   { label: "Users", href: "/admin/users", icon: Users },

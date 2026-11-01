@@ -1920,3 +1920,174 @@ export async function recordAdminProviderRevenue(
     return { success: false, error: { code: "SAVE_FAILED", message: error?.message || "Failed to record provider revenue" } };
   }
 }
+
+// --------------------------------------------------------------------------
+// Phase 13: Platform Operations, Monitoring & Health Telemetry
+// --------------------------------------------------------------------------
+
+export interface RuntimeMetrics {
+  uptime_seconds: number;
+  go_version: string;
+  os: string;
+  arch: string;
+  num_cpu: number;
+  num_goroutines: number;
+  alloc_mb: number;
+  total_alloc_mb: number;
+  sys_mb: number;
+  heap_alloc_mb: number;
+  num_gc: number;
+}
+
+export interface TableSizeEntry {
+  table_name: string;
+  total_size: string;
+  total_bytes: number;
+  row_estimate: number;
+}
+
+export interface DatabaseMetrics {
+  status: string;
+  ping_latency_ms: number;
+  total_conns: number;
+  idle_conns: number;
+  acquired_conns: number;
+  max_conns: number;
+  database_size: string;
+  database_bytes: number;
+  top_table_sizes?: TableSizeEntry[];
+}
+
+export interface RedisMetrics {
+  status: string;
+  ping_latency_ms: number;
+  enabled: boolean;
+}
+
+export interface WorkerMetrics {
+  worker_status: string;
+  ses_mode: string;
+  pending: number;
+  sending: number;
+  sent: number;
+  failed: number;
+  total: number;
+}
+
+export interface StorageMetrics {
+  provider: string;
+  status: string;
+  bucket?: string;
+  region?: string;
+}
+
+export interface APITelemetryMetrics {
+  total_requests: number;
+  status_2xx: number;
+  status_3xx: number;
+  status_4xx: number;
+  status_5xx: number;
+  error_rate_percent: number;
+  avg_latency_ms: number;
+  p50_latency_ms: number;
+  p95_latency_ms: number;
+  p99_latency_ms: number;
+}
+
+export interface SystemHealthOverview {
+  overall_status: string;
+  timestamp: string;
+  runtime: RuntimeMetrics;
+  database: DatabaseMetrics;
+  redis: RedisMetrics;
+  workers: WorkerMetrics;
+  storage: StorageMetrics;
+  api_telemetry: APITelemetryMetrics;
+}
+
+export interface FailedJobItem {
+  id: string;
+  recipient_email: string;
+  template_name: string;
+  subject: string;
+  status: string;
+  retry_count: number;
+  max_retries: number;
+  last_error: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export async function fetchSystemHealth(
+  token: string
+): Promise<ApiResponse<{ health: SystemHealthOverview }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/admin/operations/health`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    return await res.json();
+  } catch (error: any) {
+    return {
+      success: false,
+      error: { code: "FETCH_FAILED", message: error?.message || "Failed to fetch operational health" },
+    };
+  }
+}
+
+export async function fetchFailedJobs(
+  token: string,
+  params?: { limit?: number; offset?: number }
+): Promise<ApiResponse<{ failed_jobs: FailedJobItem[] }>> {
+  try {
+    const qp = new URLSearchParams();
+    if (params?.limit) qp.set("limit", params.limit.toString());
+    if (params?.offset) qp.set("offset", params.offset.toString());
+
+    const res = await fetch(`${API_BASE_URL}/api/v1/admin/operations/failed-jobs?${qp.toString()}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    return await res.json();
+  } catch (error: any) {
+    return {
+      success: false,
+      error: { code: "FETCH_FAILED", message: error?.message || "Failed to fetch failed jobs" },
+    };
+  }
+}
+
+export async function retryFailedJob(
+  token: string,
+  id: string
+): Promise<ApiResponse<{ status: string; job?: any }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/admin/operations/retry-job/${id}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return await res.json();
+  } catch (error: any) {
+    return {
+      success: false,
+      error: { code: "RETRY_FAILED", message: error?.message || "Failed to retry job" },
+    };
+  }
+}
+
+export async function retryAllFailedJobs(
+  token: string
+): Promise<ApiResponse<{ status: string; message: string }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/admin/operations/retry-all-jobs`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    return await res.json();
+  } catch (error: any) {
+    return {
+      success: false,
+      error: { code: "RETRY_FAILED", message: error?.message || "Failed to retry all jobs" },
+    };
+  }
+}

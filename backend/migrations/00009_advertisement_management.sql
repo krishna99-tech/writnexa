@@ -146,3 +146,4 @@ DROP TABLE IF EXISTS ad_clicks;
 DROP TABLE IF EXISTS ad_impressions;
 DROP TABLE IF EXISTS ad_campaigns;
 DROP TABLE IF EXISTS ad_placements;
+
