@@ -18,3 +18,4 @@ ORDER BY sort_order ASC, name ASC;
 SELECT * FROM categories
 WHERE slug = $1
 LIMIT 1;
+

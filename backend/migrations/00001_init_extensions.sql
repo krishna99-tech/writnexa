@@ -5,3 +5,4 @@ CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- +goose Down
 -- Extensions are preserved or dropped explicitly if required
+

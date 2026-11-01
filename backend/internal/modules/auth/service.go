@@ -29,6 +29,10 @@ var (
 	ErrCurrentPasswordInvalid = errors.New("current password is incorrect")
 )
 
+type EmailEnqueuer interface {
+	Enqueue(ctx context.Context, recipientEmail, recipientName string, tName string, payload any) error
+}
+
 type Service interface {
 	Register(ctx context.Context, email, password, username, displayName string) (*RegisterResult, error)
 	VerifyEmail(ctx context.Context, rawToken string) error
@@ -42,12 +46,18 @@ type Service interface {
 	GetMe(ctx context.Context, userID uuid.UUID) (*UserWithProfile, error)
 	ListSessions(ctx context.Context, userID uuid.UUID) ([]db.UserSession, error)
 	RevokeSession(ctx context.Context, userID, sessionID uuid.UUID) error
+	SetEmailEnqueuer(enqueuer EmailEnqueuer)
 }
 
 type service struct {
-	db  *database.DB
-	q   *db.Queries
-	cfg *config.Config
+	db       *database.DB
+	q        *db.Queries
+	cfg      *config.Config
+	enqueuer EmailEnqueuer
+}
+
+func (s *service) SetEmailEnqueuer(enqueuer EmailEnqueuer) {
+	s.enqueuer = enqueuer
 }
 
 func NewService(d *database.DB, cfg *config.Config) Service {
@@ -192,6 +202,17 @@ func (s *service) Register(ctx context.Context, email, password, username, displ
 		slog.String("verification_token_dev", rawToken),
 	)
 
+	if s.enqueuer != nil {
+		_ = s.enqueuer.Enqueue(ctx, email, displayName, "email_verification", map[string]interface{}{
+			"PlatformName":    "QUORIX",
+			"PlatformURL":     s.cfg.App.URL,
+			"Username":        username,
+			"VerificationURL": fmt.Sprintf("%s/verify-email?token=%s&email=%s", s.cfg.App.URL, rawToken, email),
+			"Token":           rawToken,
+			"ExpiresInHours":  24,
+		})
+	}
+
 	return &RegisterResult{
 		User:              createdUser,
 		Profile:           createdProfile,
@@ -216,6 +237,23 @@ func (s *service) VerifyEmail(ctx context.Context, rawToken string) error {
 		}
 		return txQ.SetUserEmailVerified(ctx, tokenRecord.UserID)
 	})
+
+	if err == nil && s.enqueuer != nil {
+		user, uErr := s.q.GetUserByID(ctx, tokenRecord.UserID)
+		if uErr == nil && user.Email != "" {
+			profile, _ := s.q.GetProfileByUserID(ctx, tokenRecord.UserID)
+			displayName := profile.DisplayName
+			if displayName == "" {
+				displayName = profile.Username
+			}
+			_ = s.enqueuer.Enqueue(ctx, user.Email, displayName, "welcome", map[string]interface{}{
+				"PlatformName": "QUORIX",
+				"PlatformURL":  s.cfg.App.URL,
+				"Username":     profile.Username,
+				"DisplayName":  displayName,
+			})
+		}
+	}
 
 	return err
 }
@@ -253,6 +291,19 @@ func (s *service) ResendVerification(ctx context.Context, email string) (string,
 	})
 
 	slog.Info("Resent verification token", slog.String("email", email), slog.String("token_dev", rawToken))
+
+	if err == nil && s.enqueuer != nil {
+		profile, _ := s.q.GetProfileByUserID(ctx, user.ID)
+		_ = s.enqueuer.Enqueue(ctx, user.Email, profile.DisplayName, "email_verification", map[string]interface{}{
+			"PlatformName":    "QUORIX",
+			"PlatformURL":     s.cfg.App.URL,
+			"Username":        profile.Username,
+			"VerificationURL": fmt.Sprintf("%s/verify-email?token=%s&email=%s", s.cfg.App.URL, rawToken, user.Email),
+			"Token":           rawToken,
+			"ExpiresInHours":  24,
+		})
+	}
+
 	return rawToken, err
 }
 
@@ -415,6 +466,19 @@ func (s *service) ForgotPassword(ctx context.Context, email string) (string, err
 	})
 
 	slog.Info("Password reset token generated", slog.String("email", email), slog.String("reset_token_dev", rawToken))
+
+	if err == nil && s.enqueuer != nil {
+		profile, _ := s.q.GetProfileByUserID(ctx, user.ID)
+		_ = s.enqueuer.Enqueue(ctx, user.Email, profile.DisplayName, "password_reset", map[string]interface{}{
+			"PlatformName":   "QUORIX",
+			"PlatformURL":    s.cfg.App.URL,
+			"Username":       profile.Username,
+			"ResetURL":       fmt.Sprintf("%s/reset-password?token=%s", s.cfg.App.URL, rawToken),
+			"Token":          rawToken,
+			"ExpiresInHours": 1,
+		})
+	}
+
 	return rawToken, err
 }
 
@@ -437,7 +501,7 @@ func (s *service) ResetPassword(ctx context.Context, rawToken, newPassword strin
 		return err
 	}
 
-	return s.db.WithTx(ctx, func(txQ *db.Queries) error {
+	err = s.db.WithTx(ctx, func(txQ *db.Queries) error {
 		if err := txQ.UpdateUserPassword(ctx, db.UpdateUserPasswordParams{
 			ID:           resetRecord.UserID,
 			PasswordHash: newHash,
@@ -452,6 +516,23 @@ func (s *service) ResetPassword(ctx context.Context, rawToken, newPassword strin
 		// Security: Invalidate all existing sessions upon password reset
 		return txQ.RevokeAllUserSessions(ctx, resetRecord.UserID)
 	})
+
+	if err == nil && s.enqueuer != nil {
+		user, _ := s.q.GetUserByID(ctx, resetRecord.UserID)
+		profile, _ := s.q.GetProfileByUserID(ctx, resetRecord.UserID)
+		_ = s.enqueuer.Enqueue(ctx, user.Email, profile.DisplayName, "password_changed", map[string]interface{}{
+			"PlatformName": "QUORIX",
+			"PlatformURL":  s.cfg.App.URL,
+			"Username":     profile.Username,
+			"Timestamp":    time.Now().UTC().Format(time.RFC1123),
+			"IPAddress":    "Remote Client",
+			"UserAgent":    "Web Browser",
+			"SupportEmail": "support@quorix.io",
+			"SettingsURL":  fmt.Sprintf("%s/settings", s.cfg.App.URL),
+		})
+	}
+
+	return err
 }
 
 func (s *service) ChangePassword(ctx context.Context, userID uuid.UUID, currentPassword, newPassword string) error {
@@ -479,7 +560,7 @@ func (s *service) ChangePassword(ctx context.Context, userID uuid.UUID, currentP
 		return err
 	}
 
-	return s.db.WithTx(ctx, func(txQ *db.Queries) error {
+	err = s.db.WithTx(ctx, func(txQ *db.Queries) error {
 		if err := txQ.UpdateUserPassword(ctx, db.UpdateUserPasswordParams{
 			ID:           pgID,
 			PasswordHash: newHash,
@@ -488,6 +569,22 @@ func (s *service) ChangePassword(ctx context.Context, userID uuid.UUID, currentP
 		}
 		return txQ.RevokeAllUserSessions(ctx, pgID)
 	})
+
+	if err == nil && s.enqueuer != nil {
+		profile, _ := s.q.GetProfileByUserID(ctx, pgID)
+		_ = s.enqueuer.Enqueue(ctx, user.Email, profile.DisplayName, "password_changed", map[string]interface{}{
+			"PlatformName": "QUORIX",
+			"PlatformURL":  s.cfg.App.URL,
+			"Username":     profile.Username,
+			"Timestamp":    time.Now().UTC().Format(time.RFC1123),
+			"IPAddress":    "Remote Client",
+			"UserAgent":    "Web Browser",
+			"SupportEmail": "support@quorix.io",
+			"SettingsURL":  fmt.Sprintf("%s/settings", s.cfg.App.URL),
+		})
+	}
+
+	return err
 }
 
 func (s *service) GetMe(ctx context.Context, userID uuid.UUID) (*UserWithProfile, error) {

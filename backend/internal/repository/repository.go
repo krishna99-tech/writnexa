@@ -74,3 +74,4 @@ func (s *pgStore) WithTx(ctx context.Context, fn func(queries *db.Queries) error
 	}
 	return s.database.WithTx(ctx, fn)
 }
+

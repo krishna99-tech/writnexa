@@ -55,3 +55,4 @@ func TestTokens_RandomAndHash(t *testing.T) {
 	assert.Len(t, hash, 64)  // SHA256 in hex = 64 chars
 	assert.Equal(t, HashToken(raw), hash)
 }
+

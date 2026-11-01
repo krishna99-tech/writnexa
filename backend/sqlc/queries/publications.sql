@@ -42,3 +42,4 @@ FROM publication_members pm
 JOIN profiles p ON pm.user_id = p.user_id
 WHERE pm.publication_id = $1
 ORDER BY pm.joined_at ASC;
+

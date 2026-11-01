@@ -37,3 +37,4 @@ func Init(env string, levelStr string) *slog.Logger {
 	slog.SetDefault(Log)
 	return Log
 }
+

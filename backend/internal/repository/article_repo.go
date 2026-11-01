@@ -203,3 +203,4 @@ func (r *tagRepo) IncrementTagUsage(ctx context.Context, id uuid.UUID, delta int
 		UsageCount: delta,
 	})
 }
+

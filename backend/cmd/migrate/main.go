@@ -52,3 +52,4 @@ func main() {
 		log.Fatalf("Migration command %q failed: %v", command, err)
 	}
 }
+

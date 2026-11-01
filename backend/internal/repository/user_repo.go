@@ -171,3 +171,4 @@ func (r *sessionRepo) RevokeAllUserSessions(ctx context.Context, userID uuid.UUI
 	_ = pgID.Scan(userID.String())
 	return r.q.RevokeAllUserSessions(ctx, pgID)
 }
+

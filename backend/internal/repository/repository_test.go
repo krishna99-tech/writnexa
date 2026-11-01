@@ -39,3 +39,4 @@ func TestStore_NilSafety(t *testing.T) {
 	err = store.WithTx(ctx, nil)
 	assert.NoError(t, err)
 }
+

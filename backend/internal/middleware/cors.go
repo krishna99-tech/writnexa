@@ -37,3 +37,4 @@ func CORS(cfg config.CORSConfig) gin.HandlerFunc {
 		c.Next()
 	}
 }
+

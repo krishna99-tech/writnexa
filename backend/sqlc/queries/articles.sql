@@ -104,3 +104,4 @@ WHERE article_id = $1;
 SELECT t.* FROM tags t
 JOIN article_tags at ON t.id = at.tag_id
 WHERE at.article_id = $1;
+

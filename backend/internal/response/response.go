@@ -87,3 +87,4 @@ func BadRequest(c *gin.Context, message string, details ...FieldError) {
 	}
 	Error(c, http.StatusBadRequest, "BAD_REQUEST", message, details...)
 }
+

@@ -16,6 +16,22 @@ type Config struct {
 	Redis    RedisConfig
 	CORS     CORSConfig
 	JWT      JWTConfig
+	Email    EmailConfig
+}
+
+type EmailConfig struct {
+	Provider     string        // "mock", "ses", "smtp"
+	FromAddress  string        // e.g. "QUORIX <noreply@quorix.io>"
+	ReplyTo      string        // e.g. "support@quorix.io"
+	DevMode      bool          // if true, logs rendered email without sending external network traffic
+	WorkerPoll   time.Duration // e.g. 3s
+	WorkerBatch  int32         // e.g. 10
+	MaxRetries   int32         // e.g. 3
+	AWSRegion    string        // e.g. "us-east-1"
+	SMTPHost     string        // e.g. "email-smtp.us-east-1.amazonaws.com"
+	SMTPPort     int           // e.g. 587
+	SMTPUsername string
+	SMTPPassword string
 }
 
 type AppConfig struct {
@@ -117,6 +133,20 @@ func Load() (*Config, error) {
 			RefreshTTL:    getEnvAsDuration("JWT_REFRESH_TTL", 7*24*time.Hour),
 			CookieName:    getEnv("COOKIE_NAME", "quorix_rt"),
 			CookieSecure:  getEnvAsBool("COOKIE_SECURE", appEnv == "production"),
+		},
+		Email: EmailConfig{
+			Provider:     getEnv("EMAIL_PROVIDER", "mock"),
+			FromAddress:  getEnv("EMAIL_FROM", "QUORIX <noreply@quorix.io>"),
+			ReplyTo:      getEnv("EMAIL_REPLY_TO", "support@quorix.io"),
+			DevMode:      getEnvAsBool("EMAIL_DEV_MODE", appEnv != "production"),
+			WorkerPoll:   getEnvAsDuration("EMAIL_WORKER_POLL", 3*time.Second),
+			WorkerBatch:  int32(getEnvAsInt("EMAIL_WORKER_BATCH", 10)),
+			MaxRetries:   int32(getEnvAsInt("EMAIL_MAX_RETRIES", 3)),
+			AWSRegion:    getEnv("AWS_REGION", "us-east-1"),
+			SMTPHost:     getEnv("SMTP_HOST", ""),
+			SMTPPort:     getEnvAsInt("SMTP_PORT", 587),
+			SMTPUsername: getEnv("SMTP_USERNAME", ""),
+			SMTPPassword: getEnv("SMTP_PASSWORD", ""),
 		},
 	}
 

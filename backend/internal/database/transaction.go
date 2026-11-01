@@ -47,3 +47,4 @@ func (d *DB) WithTx(ctx context.Context, fn func(queries *db.Queries) error) err
 
 	return nil
 }
+

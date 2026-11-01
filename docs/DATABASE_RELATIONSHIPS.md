@@ -98,3 +98,4 @@ SQL queries in `backend/sqlc/queries/` are compiled to type-safe Go code in `bac
 cd backend/sqlc
 sqlc generate
 ```
+

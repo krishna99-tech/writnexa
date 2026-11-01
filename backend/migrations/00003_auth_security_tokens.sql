@@ -29,3 +29,4 @@ CREATE INDEX IF NOT EXISTS idx_prt_user_id ON password_reset_tokens(user_id);
 -- +goose Down
 DROP TABLE IF EXISTS password_reset_tokens;
 DROP TABLE IF EXISTS email_verification_tokens;
+

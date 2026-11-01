@@ -95,3 +95,4 @@ func (rl *RateLimiter) Limit() gin.HandlerFunc {
 		c.Next()
 	}
 }
+

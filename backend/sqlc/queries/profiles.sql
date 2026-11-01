@@ -62,3 +62,4 @@ SET
     following_count = following_count + $2,
     updated_at = NOW()
 WHERE user_id = $1;
+

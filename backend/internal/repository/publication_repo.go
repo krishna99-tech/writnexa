@@ -83,3 +83,4 @@ func (r *publicationRepo) ListPublicationMembers(ctx context.Context, pubID uuid
 	_ = pID.Scan(pubID.String())
 	return r.q.ListPublicationMembers(ctx, pID)
 }
+

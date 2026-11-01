@@ -77,3 +77,4 @@ func GetAuthenticatedUserID(c *gin.Context) (uuid.UUID, bool) {
 	id, ok := val.(uuid.UUID)
 	return id, ok
 }
+

@@ -37,3 +37,4 @@ func TestHealthCheck_NoServices(t *testing.T) {
 	assert.Equal(t, "not_configured", res.Data.Services["database"].Status)
 	assert.Equal(t, "disabled", res.Data.Services["redis"].Status)
 }
+

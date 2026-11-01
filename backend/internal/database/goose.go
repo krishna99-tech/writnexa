@@ -30,3 +30,4 @@ func RunMigrations(cfg config.DatabaseConfig, migrationsDir string) error {
 	slog.Info("Database migrations completed successfully")
 	return nil
 }
+

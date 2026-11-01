@@ -70,6 +70,38 @@ type Comment struct {
 	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
 }
 
+type EmailLog struct {
+	ID             pgtype.UUID        `json:"id"`
+	OutboxID       pgtype.UUID        `json:"outbox_id"`
+	RecipientEmail string             `json:"recipient_email"`
+	Subject        string             `json:"subject"`
+	Status         string             `json:"status"`
+	SesMessageID   pgtype.Text        `json:"ses_message_id"`
+	ErrorMessage   pgtype.Text        `json:"error_message"`
+	AttemptNumber  int32              `json:"attempt_number"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+}
+
+type EmailOutbox struct {
+	ID             pgtype.UUID        `json:"id"`
+	RecipientEmail string             `json:"recipient_email"`
+	RecipientName  string             `json:"recipient_name"`
+	TemplateName   string             `json:"template_name"`
+	Subject        string             `json:"subject"`
+	HtmlBody       string             `json:"html_body"`
+	TextBody       string             `json:"text_body"`
+	PayloadJson    []byte             `json:"payload_json"`
+	Status         string             `json:"status"`
+	RetryCount     int32              `json:"retry_count"`
+	MaxRetries     int32              `json:"max_retries"`
+	NextRetryAt    pgtype.Timestamptz `json:"next_retry_at"`
+	LastError      pgtype.Text        `json:"last_error"`
+	SesMessageID   pgtype.Text        `json:"ses_message_id"`
+	SentAt         pgtype.Timestamptz `json:"sent_at"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
+}
+
 type EmailVerificationToken struct {
 	ID        pgtype.UUID        `json:"id"`
 	UserID    pgtype.UUID        `json:"user_id"`
@@ -89,6 +121,16 @@ type Like struct {
 	UserID    pgtype.UUID        `json:"user_id"`
 	ArticleID pgtype.UUID        `json:"article_id"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type NotificationPreference struct {
+	UserID                pgtype.UUID        `json:"user_id"`
+	EmailOnNewFollower    bool               `json:"email_on_new_follower"`
+	EmailOnNewComment     bool               `json:"email_on_new_comment"`
+	EmailOnReply          bool               `json:"email_on_reply"`
+	EmailOnArticlePublish bool               `json:"email_on_article_publish"`
+	CreatedAt             pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt             pgtype.Timestamptz `json:"updated_at"`
 }
 
 type PasswordResetToken struct {

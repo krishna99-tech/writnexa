@@ -68,3 +68,4 @@ func (db *DB) Close() {
 		slog.Info("PostgreSQL connection pool closed")
 	}
 }
+

@@ -24,3 +24,4 @@ SET
     usage_count = usage_count + $2,
     updated_at = NOW()
 WHERE id = $1;
+

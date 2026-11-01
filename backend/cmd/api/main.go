@@ -14,10 +14,12 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/quorix/quorix-backend/internal/config"
 	"github.com/quorix/quorix-backend/internal/database"
+	dbQueries "github.com/quorix/quorix-backend/internal/database/sqlc"
 	"github.com/quorix/quorix-backend/internal/health"
 	"github.com/quorix/quorix-backend/internal/logger"
 	"github.com/quorix/quorix-backend/internal/middleware"
 	"github.com/quorix/quorix-backend/internal/modules/auth"
+	"github.com/quorix/quorix-backend/internal/modules/email"
 	"github.com/quorix/quorix-backend/internal/redis"
 	"github.com/quorix/quorix-backend/internal/response"
 )
@@ -83,8 +85,28 @@ func main() {
 	router.Use(middleware.Recovery())
 	router.Use(middleware.CORS(cfg.CORS))
 
-	// 7. Handlers & Routes
+	// 7. Handlers, Email System & Routes
 	healthHandler := health.NewHandler(db, redisClient, AppVersion)
+
+	// Initialize Email & Notification System (SES API + SES SMTP Relay + Dev Mock)
+	queries := dbQueries.New(db.Pool)
+	emailSender, err := email.NewSender(cfg)
+	if err != nil {
+		slog.Warn("Failed to initialize primary email sender; falling back to mock", slog.String("error", err.Error()))
+		emailSender = email.NewMockSender()
+	}
+
+	emailSvc := email.NewService(cfg, db, queries)
+	emailHandler := email.NewHandler(emailSvc)
+
+	// Email Outbox Background Worker
+	emailWorker := email.NewWorker(cfg, db, queries, emailSender)
+	emailWorker.Start(ctx)
+
+	// Authentication & Security Module (with Email Enqueuer)
+	authSvc := auth.NewService(db, cfg)
+	authSvc.SetEmailEnqueuer(email.NewAuthEnqueuerAdapter(emailSvc))
+	authHandler := auth.NewHandler(authSvc, cfg)
 
 	// Root health endpoints
 	router.GET("/health", healthHandler.Check)
@@ -100,9 +122,7 @@ func main() {
 			})
 		})
 
-		// Authentication & Security Module
-		authSvc := auth.NewService(db, cfg)
-		authHandler := auth.NewHandler(authSvc, cfg)
+		email.RegisterRoutes(v1, emailHandler, cfg)
 		auth.RegisterRoutes(v1, authHandler, cfg)
 	}
 
@@ -137,6 +157,8 @@ func main() {
 	if err := srv.Shutdown(shutdownCtx); err != nil {
 		slog.Error("Server forced to shutdown", slog.String("error", err.Error()))
 	}
+
+	emailWorker.Stop()
 
 	slog.Info("QUORIX API Backend terminated gracefully")
 }
