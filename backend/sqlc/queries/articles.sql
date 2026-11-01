@@ -224,3 +224,14 @@ SELECT t.* FROM tags t
 JOIN article_tags at ON t.id = at.tag_id
 WHERE at.article_id = $1;
 
+-- name: GetAuthorArticleStats :one
+SELECT 
+    COUNT(*) as total_articles,
+    COALESCE(SUM(views_count), 0)::bigint as total_views,
+    COALESCE(SUM(likes_count), 0)::bigint as total_likes,
+    COALESCE(SUM(comments_count), 0)::bigint as total_comments,
+    COALESCE(SUM(bookmarks_count), 0)::bigint as total_bookmarks
+FROM articles a
+JOIN profiles p ON a.author_id = p.user_id
+WHERE LOWER(p.username) = LOWER($1) AND a.status = 'published' AND a.deleted_at IS NULL;
+

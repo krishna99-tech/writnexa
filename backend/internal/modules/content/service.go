@@ -3,6 +3,7 @@ package content
 import (
 	"context"
 	"errors"
+	"regexp"
 	"time"
 
 	"github.com/google/uuid"
@@ -16,7 +17,11 @@ var (
 	ErrCategoryNotFound = errors.New("category not found")
 	ErrTagNotFound      = errors.New("tag not found")
 	ErrAuthorNotFound   = errors.New("author not found")
+	ErrInvalidUsername  = errors.New("username must be between 3 and 30 characters and contain only letters, numbers, and underscores")
+	ErrUsernameTaken    = errors.New("username is already taken")
 )
+
+var usernameRegex = regexp.MustCompile(`^[a-zA-Z0-9_]{3,30}$`)
 
 type ArticleSummary struct {
 	ID                 string    `json:"id"`
@@ -82,6 +87,29 @@ type AuthorDetail struct {
 	Location    *string `json:"location,omitempty"`
 }
 
+type AuthorStats struct {
+	TotalArticles  int64 `json:"total_articles"`
+	TotalViews     int64 `json:"total_views"`
+	TotalLikes     int64 `json:"total_likes"`
+	TotalComments  int64 `json:"total_comments"`
+	TotalBookmarks int64 `json:"total_bookmarks"`
+	FollowerCount  int32 `json:"follower_count"`
+	FollowingCount int32 `json:"following_count"`
+}
+
+type UpdateProfileInput struct {
+	Username    *string `json:"username" binding:"omitempty,min=3,max=30"`
+	DisplayName *string `json:"display_name" binding:"omitempty,min=2,max=100"`
+	Headline    *string `json:"headline" binding:"omitempty,max=160"`
+	Bio         *string `json:"bio" binding:"omitempty,max=2000"`
+	AvatarURL   *string `json:"avatar_url" binding:"omitempty"`
+	GithubURL   *string `json:"github_url" binding:"omitempty"`
+	TwitterURL  *string `json:"twitter_url" binding:"omitempty"`
+	LinkedinURL *string `json:"linkedin_url" binding:"omitempty"`
+	WebsiteURL  *string `json:"website_url" binding:"omitempty"`
+	Location    *string `json:"location" binding:"omitempty,max=100"`
+}
+
 type Service interface {
 	ListPublishedArticles(ctx context.Context, page, perPage int, sort string, categorySlug, tagSlug string) ([]ArticleSummary, int64, error)
 	GetArticleBySlug(ctx context.Context, slug string) (*ArticleDetail, error)
@@ -94,7 +122,10 @@ type Service interface {
 	GetTagBySlug(ctx context.Context, slug string) (*db.Tag, error)
 	ListAuthors(ctx context.Context, page, perPage int) ([]AuthorSummary, int64, error)
 	GetAuthorProfile(ctx context.Context, username string) (*AuthorDetail, error)
+	GetAuthorProfileByUserID(ctx context.Context, userID uuid.UUID) (*AuthorDetail, error)
 	ListAuthorArticles(ctx context.Context, username string, page, perPage int) ([]ArticleSummary, int64, error)
+	GetAuthorStats(ctx context.Context, username string) (*AuthorStats, error)
+	UpdateProfile(ctx context.Context, userID uuid.UUID, input UpdateProfileInput) (*AuthorDetail, error)
 }
 
 type service struct {
@@ -466,6 +497,117 @@ func (s *service) GetAuthorProfile(ctx context.Context, username string) (*Autho
 		return nil, ErrAuthorNotFound
 	}
 
+	return profileToAuthorDetail(r), nil
+}
+
+func (s *service) GetAuthorProfileByUserID(ctx context.Context, userID uuid.UUID) (*AuthorDetail, error) {
+	if s.q == nil {
+		return nil, errors.New("database not available")
+	}
+
+	r, err := s.q.GetProfileByUserID(ctx, pgtype.UUID{Bytes: userID, Valid: true})
+	if err != nil {
+		return nil, ErrAuthorNotFound
+	}
+
+	return profileToAuthorDetail(r), nil
+}
+
+func (s *service) GetAuthorStats(ctx context.Context, username string) (*AuthorStats, error) {
+	if s.q == nil {
+		return nil, errors.New("database not available")
+	}
+
+	profile, err := s.q.GetProfileByUsername(ctx, username)
+	if err != nil {
+		return nil, ErrAuthorNotFound
+	}
+
+	statsRow, err := s.q.GetAuthorArticleStats(ctx, username)
+	if err != nil {
+		return nil, err
+	}
+
+	return &AuthorStats{
+		TotalArticles:  statsRow.TotalArticles,
+		TotalViews:     statsRow.TotalViews,
+		TotalLikes:     statsRow.TotalLikes,
+		TotalComments:  statsRow.TotalComments,
+		TotalBookmarks: statsRow.TotalBookmarks,
+		FollowerCount:  profile.FollowerCount,
+		FollowingCount: profile.FollowingCount,
+	}, nil
+}
+
+func (s *service) UpdateProfile(ctx context.Context, userID uuid.UUID, input UpdateProfileInput) (*AuthorDetail, error) {
+	if s.q == nil {
+		return nil, errors.New("database not available")
+	}
+
+	pgUserID := pgtype.UUID{Bytes: userID, Valid: true}
+
+	// Validate username format if supplied
+	if input.Username != nil && *input.Username != "" {
+		if !usernameRegex.MatchString(*input.Username) {
+			return nil, ErrInvalidUsername
+		}
+
+		taken, err := s.q.CheckUsernameExistsExceptUser(ctx, db.CheckUsernameExistsExceptUserParams{
+			Lower:  *input.Username,
+			UserID: pgUserID,
+		})
+		if err != nil {
+			return nil, err
+		}
+		if taken {
+			return nil, ErrUsernameTaken
+		}
+	}
+
+	params := db.UpdateProfileFullParams{
+		UserID: pgUserID,
+	}
+
+	if input.Username != nil && *input.Username != "" {
+		params.Username = pgtype.Text{String: *input.Username, Valid: true}
+	}
+	if input.DisplayName != nil && *input.DisplayName != "" {
+		params.DisplayName = pgtype.Text{String: *input.DisplayName, Valid: true}
+	}
+	if input.Headline != nil {
+		params.Headline = pgtype.Text{String: *input.Headline, Valid: true}
+	}
+	if input.Bio != nil {
+		params.Bio = pgtype.Text{String: *input.Bio, Valid: true}
+	}
+	if input.AvatarURL != nil {
+		params.AvatarUrl = pgtype.Text{String: *input.AvatarURL, Valid: true}
+	}
+	if input.GithubURL != nil {
+		params.GithubUrl = pgtype.Text{String: *input.GithubURL, Valid: true}
+	}
+	if input.TwitterURL != nil {
+		params.TwitterUrl = pgtype.Text{String: *input.TwitterURL, Valid: true}
+	}
+	if input.LinkedinURL != nil {
+		params.LinkedinUrl = pgtype.Text{String: *input.LinkedinURL, Valid: true}
+	}
+	if input.WebsiteURL != nil {
+		params.WebsiteUrl = pgtype.Text{String: *input.WebsiteURL, Valid: true}
+	}
+	if input.Location != nil {
+		params.Location = pgtype.Text{String: *input.Location, Valid: true}
+	}
+
+	updated, err := s.q.UpdateProfileFull(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+
+	return profileToAuthorDetail(updated), nil
+}
+
+func profileToAuthorDetail(r db.Profile) *AuthorDetail {
 	var headline, bio, avatar, gh, tw, li, web, loc *string
 	if r.Headline.Valid {
 		headline = &r.Headline.String
@@ -514,7 +656,7 @@ func (s *service) GetAuthorProfile(ctx context.Context, username string) (*Autho
 		LinkedinURL: li,
 		WebsiteURL:  web,
 		Location:    loc,
-	}, nil
+	}
 }
 
 func (s *service) ListAuthorArticles(ctx context.Context, username string, page, perPage int) ([]ArticleSummary, int64, error) {

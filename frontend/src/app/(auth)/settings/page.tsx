@@ -2,13 +2,20 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/lib/auth-context";
-import { API_BASE_URL, ApiResponse } from "@/lib/api";
+import {
+  API_BASE_URL,
+  ApiResponse,
+  AuthorDetail,
+  fetchMyProfile,
+  updateAuthorProfile,
+} from "@/lib/api";
 import {
   User,
   Shield,
@@ -18,6 +25,14 @@ import {
   AlertCircle,
   Trash2,
   RefreshCw,
+  ExternalLink,
+  Save,
+  Globe,
+  Github,
+  Twitter,
+  Linkedin,
+  MapPin,
+  Sparkles,
 } from "lucide-react";
 
 interface SessionItem {
@@ -31,7 +46,24 @@ interface SessionItem {
 
 export default function SettingsPage() {
   const router = useRouter();
-  const { user, profile, accessToken, isLoading, logout } = useAuth();
+  const { user, profile, accessToken, isLoading, fetchCurrentUser } = useAuth();
+
+  // Profile Edit State
+  const [displayName, setDisplayName] = useState("");
+  const [usernameInput, setUsernameInput] = useState("");
+  const [headline, setHeadline] = useState("");
+  const [bio, setBio] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
+  const [location, setLocation] = useState("");
+  const [githubUrl, setGithubUrl] = useState("");
+  const [twitterUrl, setTwitterUrl] = useState("");
+  const [linkedinUrl, setLinkedinUrl] = useState("");
+  const [websiteUrl, setWebsiteUrl] = useState("");
+
+  const [isLoadingProfile, setIsLoadingProfile] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [profileSuccess, setProfileSuccess] = useState<string | null>(null);
+  const [profileError, setProfileError] = useState<string | null>(null);
 
   // Change Password State
   const [currentPassword, setCurrentPassword] = useState("");
@@ -45,6 +77,26 @@ export default function SettingsPage() {
   const [sessions, setSessions] = useState<SessionItem[]>([]);
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
   const [sessionsError, setSessionsError] = useState<string | null>(null);
+
+  const loadProfile = useCallback(async () => {
+    if (!accessToken) return;
+    setIsLoadingProfile(true);
+    const res = await fetchMyProfile(accessToken);
+    if (res.success && res.data?.author) {
+      const a = res.data.author;
+      setDisplayName(a.display_name || "");
+      setUsernameInput(a.username || "");
+      setHeadline(a.headline || "");
+      setBio(a.bio || "");
+      setAvatarUrl(a.avatar_url || "");
+      setLocation(a.location || "");
+      setGithubUrl(a.github_url || "");
+      setTwitterUrl(a.twitter_url || "");
+      setLinkedinUrl(a.linkedin_url || "");
+      setWebsiteUrl(a.website_url || "");
+    }
+    setIsLoadingProfile(false);
+  }, [accessToken]);
 
   const fetchSessions = useCallback(async () => {
     if (!accessToken) return;
@@ -74,9 +126,41 @@ export default function SettingsPage() {
       return;
     }
     if (accessToken) {
+      loadProfile();
       fetchSessions();
     }
-  }, [isLoading, user, accessToken, router, fetchSessions]);
+  }, [isLoading, user, accessToken, router, loadProfile, fetchSessions]);
+
+  const handleUpdateProfile = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!accessToken) return;
+
+    setProfileError(null);
+    setProfileSuccess(null);
+    setIsSavingProfile(true);
+
+    const res = await updateAuthorProfile(accessToken, {
+      display_name: displayName,
+      username: usernameInput,
+      headline: headline,
+      bio: bio,
+      avatar_url: avatarUrl,
+      location: location,
+      github_url: githubUrl,
+      twitter_url: twitterUrl,
+      linkedin_url: linkedinUrl,
+      website_url: websiteUrl,
+    });
+
+    setIsSavingProfile(false);
+
+    if (!res.success) {
+      setProfileError(res.error?.message || "Failed to update profile.");
+    } else {
+      setProfileSuccess("Public author profile updated successfully!");
+      await fetchCurrentUser(accessToken);
+    }
+  };
 
   const handleChangePassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -208,11 +292,227 @@ export default function SettingsPage() {
                 <span className="text-zinc-400 text-[10px] break-all">{user.id}</span>
               </div>
             </CardContent>
+            {profile?.username && (
+              <CardFooter className="pt-0">
+                <Link
+                  href={`/author/${profile.username}`}
+                  target="_blank"
+                  className="w-full inline-flex items-center justify-center gap-1.5 py-2 px-3 rounded-lg border border-emerald-500/30 hover:border-emerald-500/60 bg-emerald-950/20 hover:bg-emerald-950/40 text-emerald-400 font-mono text-xs transition-colors"
+                >
+                  <span>View Public Profile</span>
+                  <ExternalLink className="w-3.5 h-3.5" />
+                </Link>
+              </CardFooter>
+            )}
           </Card>
         </div>
 
-        {/* Security Controls */}
+        {/* Profile & Security Controls */}
         <div className="md:col-span-2 space-y-6">
+          {/* Public Profile Editor */}
+          <Card className="border-zinc-800 bg-zinc-900/40">
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-emerald-400" />
+                <CardTitle className="text-lg text-zinc-100">Author Profile</CardTitle>
+              </div>
+              <CardDescription className="text-xs text-zinc-400">
+                Customize your public engineering profile, bio, and developer socials visible at{" "}
+                <span className="font-mono text-emerald-400">/author/{profile?.username || "username"}</span>
+              </CardDescription>
+            </CardHeader>
+            <form onSubmit={handleUpdateProfile}>
+              <CardContent className="space-y-4">
+                {profileSuccess && (
+                  <div className="p-3 rounded bg-emerald-950/40 border border-emerald-800 text-emerald-300 text-xs flex items-center justify-between gap-2 font-mono">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 shrink-0" />
+                      <span>{profileSuccess}</span>
+                    </div>
+                    {usernameInput && (
+                      <Link
+                        href={`/author/${usernameInput}`}
+                        className="underline hover:text-emerald-200"
+                      >
+                        Preview Profile &rarr;
+                      </Link>
+                    )}
+                  </div>
+                )}
+                {profileError && (
+                  <div className="p-3 rounded bg-rose-950/40 border border-rose-800 text-rose-300 text-xs flex items-center gap-2 font-mono">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>{profileError}</span>
+                  </div>
+                )}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="displayName">Display Name</Label>
+                    <Input
+                      id="displayName"
+                      value={displayName}
+                      onChange={(e) => setDisplayName(e.target.value)}
+                      placeholder="e.g. Alex Morgan"
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="usernameInput">Username Handle</Label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-2.5 text-zinc-500 font-mono text-sm">@</span>
+                      <Input
+                        id="usernameInput"
+                        value={usernameInput}
+                        onChange={(e) => setUsernameInput(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
+                        placeholder="username"
+                        className="pl-8 font-mono"
+                        required
+                        minLength={3}
+                        maxLength={30}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="headline">Professional Headline</Label>
+                  <Input
+                    id="headline"
+                    value={headline}
+                    onChange={(e) => setHeadline(e.target.value)}
+                    placeholder="e.g. Staff Distributed Systems Architect & Go Contributor"
+                    maxLength={160}
+                  />
+                  <p className="text-[11px] text-zinc-500 font-mono">
+                    Brief one-line summary displayed on your profile and article cards.
+                  </p>
+                </div>
+
+                <div className="space-y-1.5">
+                  <Label htmlFor="bio">Biography</Label>
+                  <textarea
+                    id="bio"
+                    rows={3}
+                    value={bio}
+                    onChange={(e) => setBio(e.target.value)}
+                    placeholder="Tell the developer community about your background, projects, and technical interests..."
+                    className="w-full rounded-md border border-zinc-800 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:ring-1 focus:ring-emerald-500"
+                    maxLength={2000}
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <Label htmlFor="avatarUrl">Avatar URL</Label>
+                    <Input
+                      id="avatarUrl"
+                      type="url"
+                      value={avatarUrl}
+                      onChange={(e) => setAvatarUrl(e.target.value)}
+                      placeholder="https://..."
+                    />
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <Label htmlFor="location">Location</Label>
+                    <Input
+                      id="location"
+                      value={location}
+                      onChange={(e) => setLocation(e.target.value)}
+                      placeholder="e.g. San Francisco, CA / Remote"
+                      maxLength={100}
+                    />
+                  </div>
+                </div>
+
+                {/* Social Links Grid */}
+                <div className="pt-2 space-y-3">
+                  <span className="text-xs font-mono text-zinc-400 block font-semibold">
+                    Developer Socials & Links
+                  </span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="githubUrl" className="flex items-center gap-1.5">
+                        <Github className="w-3.5 h-3.5 text-zinc-400" />
+                        <span>GitHub Profile</span>
+                      </Label>
+                      <Input
+                        id="githubUrl"
+                        type="url"
+                        value={githubUrl}
+                        onChange={(e) => setGithubUrl(e.target.value)}
+                        placeholder="https://github.com/..."
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="linkedinUrl" className="flex items-center gap-1.5">
+                        <Linkedin className="w-3.5 h-3.5 text-zinc-400" />
+                        <span>LinkedIn Profile</span>
+                      </Label>
+                      <Input
+                        id="linkedinUrl"
+                        type="url"
+                        value={linkedinUrl}
+                        onChange={(e) => setLinkedinUrl(e.target.value)}
+                        placeholder="https://linkedin.com/in/..."
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="twitterUrl" className="flex items-center gap-1.5">
+                        <Twitter className="w-3.5 h-3.5 text-zinc-400" />
+                        <span>Twitter / X</span>
+                      </Label>
+                      <Input
+                        id="twitterUrl"
+                        type="url"
+                        value={twitterUrl}
+                        onChange={(e) => setTwitterUrl(e.target.value)}
+                        placeholder="https://x.com/..."
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="websiteUrl" className="flex items-center gap-1.5">
+                        <Globe className="w-3.5 h-3.5 text-zinc-400" />
+                        <span>Personal Website / Blog</span>
+                      </Label>
+                      <Input
+                        id="websiteUrl"
+                        type="url"
+                        value={websiteUrl}
+                        onChange={(e) => setWebsiteUrl(e.target.value)}
+                        placeholder="https://..."
+                      />
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+              <CardFooter className="flex justify-end pt-2 border-t border-zinc-800/60">
+                <Button
+                  type="submit"
+                  disabled={isSavingProfile || isLoadingProfile}
+                  className="bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-semibold gap-2 font-mono text-xs"
+                >
+                  {isSavingProfile ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>Saving...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-3.5 h-3.5" />
+                      <span>Save Profile</span>
+                    </>
+                  )}
+                </Button>
+              </CardFooter>
+            </form>
+          </Card>
+
           {/* Change Password Form */}
           <Card className="border-zinc-800 bg-zinc-900/40">
             <CardHeader>

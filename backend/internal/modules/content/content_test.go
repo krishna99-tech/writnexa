@@ -4,6 +4,7 @@ import (
 	"context"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/quorix/quorix-backend/internal/config"
 	"github.com/quorix/quorix-backend/internal/database"
 	db "github.com/quorix/quorix-backend/internal/database/sqlc"
@@ -127,3 +128,74 @@ func TestContent_Search(t *testing.T) {
 	assert.NotEmpty(t, results)
 	assert.Contains(t, results[0].Title, "Concurrency")
 }
+
+func TestContent_AuthorStats(t *testing.T) {
+	pool, svc := setupContentTest(t)
+	defer pool.Close()
+
+	ctx := context.Background()
+
+	// 1. Fetch stats for existing seeded author
+	stats, err := svc.GetAuthorStats(ctx, "alexmorgan")
+	require.NoError(t, err)
+	assert.NotNil(t, stats)
+	assert.GreaterOrEqual(t, stats.TotalArticles, int64(1))
+	assert.GreaterOrEqual(t, stats.TotalViews, int64(0))
+
+	// 2. Fetch stats for non-existent author
+	_, err = svc.GetAuthorStats(ctx, "non_existent_author_9999")
+	assert.ErrorIs(t, err, ErrAuthorNotFound)
+}
+
+func TestContent_UpdateProfileAndUsernameValidation(t *testing.T) {
+	pool, svc := setupContentTest(t)
+	defer pool.Close()
+
+	ctx := context.Background()
+
+	// Get alexmorgan profile
+	author, err := svc.GetAuthorProfile(ctx, "alexmorgan")
+	require.NoError(t, err)
+	userID := uuid.MustParse(author.UserID)
+
+	// 1. Invalid username regex validation (< 3 chars or invalid characters)
+	shortName := "al"
+	_, err = svc.UpdateProfile(ctx, userID, UpdateProfileInput{
+		Username: &shortName,
+	})
+	assert.ErrorIs(t, err, ErrInvalidUsername)
+
+	invalidCharName := "alex-morgan!"
+	_, err = svc.UpdateProfile(ctx, userID, UpdateProfileInput{
+		Username: &invalidCharName,
+	})
+	assert.ErrorIs(t, err, ErrInvalidUsername)
+
+	// 2. Conflict validation with another existing author
+	takenName := "elenarostova"
+	_, err = svc.UpdateProfile(ctx, userID, UpdateProfileInput{
+		Username: &takenName,
+	})
+	assert.ErrorIs(t, err, ErrUsernameTaken)
+
+	// 3. Successful update of bio, headline and location
+	newHeadline := "Principal Distributed Systems Architect"
+	newLoc := "San Francisco, CA"
+	newBio := "Exploring distributed consensus algorithms and high-throughput Go microservices."
+	updated, err := svc.UpdateProfile(ctx, userID, UpdateProfileInput{
+		Headline: &newHeadline,
+		Location: &newLoc,
+		Bio:      &newBio,
+	})
+	require.NoError(t, err)
+	assert.Equal(t, newHeadline, *updated.Headline)
+	assert.Equal(t, newLoc, *updated.Location)
+	assert.Equal(t, newBio, *updated.Bio)
+
+	// Revert to original headline for test purity
+	origHeadline := "Staff Systems Architect & Go Contributor"
+	_, _ = svc.UpdateProfile(ctx, userID, UpdateProfileInput{
+		Headline: &origHeadline,
+	})
+}
+

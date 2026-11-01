@@ -11,6 +11,25 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const checkUsernameExistsExceptUser = `-- name: CheckUsernameExistsExceptUser :one
+SELECT EXISTS (
+    SELECT 1 FROM profiles
+    WHERE LOWER(username) = LOWER($1) AND user_id != $2
+)
+`
+
+type CheckUsernameExistsExceptUserParams struct {
+	Lower  string      `json:"lower"`
+	UserID pgtype.UUID `json:"user_id"`
+}
+
+func (q *Queries) CheckUsernameExistsExceptUser(ctx context.Context, arg CheckUsernameExistsExceptUserParams) (bool, error) {
+	row := q.db.QueryRow(ctx, checkUsernameExistsExceptUser, arg.Lower, arg.UserID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const countPublicAuthors = `-- name: CountPublicAuthors :one
 SELECT COUNT(*) FROM profiles p
 JOIN users u ON p.user_id = u.id
@@ -314,6 +333,74 @@ type UpdateProfileParams struct {
 func (q *Queries) UpdateProfile(ctx context.Context, arg UpdateProfileParams) (Profile, error) {
 	row := q.db.QueryRow(ctx, updateProfile,
 		arg.UserID,
+		arg.DisplayName,
+		arg.Headline,
+		arg.Bio,
+		arg.AvatarUrl,
+		arg.GithubUrl,
+		arg.TwitterUrl,
+		arg.LinkedinUrl,
+		arg.WebsiteUrl,
+		arg.Location,
+	)
+	var i Profile
+	err := row.Scan(
+		&i.UserID,
+		&i.Username,
+		&i.DisplayName,
+		&i.Headline,
+		&i.Bio,
+		&i.AvatarUrl,
+		&i.GithubUrl,
+		&i.TwitterUrl,
+		&i.LinkedinUrl,
+		&i.WebsiteUrl,
+		&i.Location,
+		&i.ArticleCount,
+		&i.FollowerCount,
+		&i.FollowingCount,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateProfileFull = `-- name: UpdateProfileFull :one
+UPDATE profiles
+SET
+    username = COALESCE($2, username),
+    display_name = COALESCE($3, display_name),
+    headline = COALESCE($4, headline),
+    bio = COALESCE($5, bio),
+    avatar_url = COALESCE($6, avatar_url),
+    github_url = COALESCE($7, github_url),
+    twitter_url = COALESCE($8, twitter_url),
+    linkedin_url = COALESCE($9, linkedin_url),
+    website_url = COALESCE($10, website_url),
+    location = COALESCE($11, location),
+    updated_at = NOW()
+WHERE user_id = $1
+RETURNING user_id, username, display_name, headline, bio, avatar_url, github_url, twitter_url, linkedin_url, website_url, location, article_count, follower_count, following_count, created_at, updated_at
+`
+
+type UpdateProfileFullParams struct {
+	UserID      pgtype.UUID `json:"user_id"`
+	Username    pgtype.Text `json:"username"`
+	DisplayName pgtype.Text `json:"display_name"`
+	Headline    pgtype.Text `json:"headline"`
+	Bio         pgtype.Text `json:"bio"`
+	AvatarUrl   pgtype.Text `json:"avatar_url"`
+	GithubUrl   pgtype.Text `json:"github_url"`
+	TwitterUrl  pgtype.Text `json:"twitter_url"`
+	LinkedinUrl pgtype.Text `json:"linkedin_url"`
+	WebsiteUrl  pgtype.Text `json:"website_url"`
+	Location    pgtype.Text `json:"location"`
+}
+
+func (q *Queries) UpdateProfileFull(ctx context.Context, arg UpdateProfileFullParams) (Profile, error) {
+	row := q.db.QueryRow(ctx, updateProfileFull,
+		arg.UserID,
+		arg.Username,
 		arg.DisplayName,
 		arg.Headline,
 		arg.Bio,

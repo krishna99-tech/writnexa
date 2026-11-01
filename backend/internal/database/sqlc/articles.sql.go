@@ -330,6 +330,39 @@ func (q *Queries) GetArticleTags(ctx context.Context, articleID pgtype.UUID) ([]
 	return items, nil
 }
 
+const getAuthorArticleStats = `-- name: GetAuthorArticleStats :one
+SELECT 
+    COUNT(*) as total_articles,
+    COALESCE(SUM(views_count), 0)::bigint as total_views,
+    COALESCE(SUM(likes_count), 0)::bigint as total_likes,
+    COALESCE(SUM(comments_count), 0)::bigint as total_comments,
+    COALESCE(SUM(bookmarks_count), 0)::bigint as total_bookmarks
+FROM articles a
+JOIN profiles p ON a.author_id = p.user_id
+WHERE LOWER(p.username) = LOWER($1) AND a.status = 'published' AND a.deleted_at IS NULL
+`
+
+type GetAuthorArticleStatsRow struct {
+	TotalArticles  int64 `json:"total_articles"`
+	TotalViews     int64 `json:"total_views"`
+	TotalLikes     int64 `json:"total_likes"`
+	TotalComments  int64 `json:"total_comments"`
+	TotalBookmarks int64 `json:"total_bookmarks"`
+}
+
+func (q *Queries) GetAuthorArticleStats(ctx context.Context, lower string) (GetAuthorArticleStatsRow, error) {
+	row := q.db.QueryRow(ctx, getAuthorArticleStats, lower)
+	var i GetAuthorArticleStatsRow
+	err := row.Scan(
+		&i.TotalArticles,
+		&i.TotalViews,
+		&i.TotalLikes,
+		&i.TotalComments,
+		&i.TotalBookmarks,
+	)
+	return i, err
+}
+
 const incrementArticleBookmarks = `-- name: IncrementArticleBookmarks :exec
 UPDATE articles
 SET bookmarks_count = bookmarks_count + $2

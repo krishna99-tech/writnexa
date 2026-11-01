@@ -127,7 +127,7 @@ func main() {
 			})
 		})
 
-		content.RegisterRoutes(v1, contentHandler)
+		content.RegisterRoutes(v1, contentHandler, cfg)
 		email.RegisterRoutes(v1, emailHandler, cfg)
 		auth.RegisterRoutes(v1, authHandler, cfg)
 	}

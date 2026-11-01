@@ -97,6 +97,29 @@ export interface AuthorDetail extends AuthorSummary {
   location?: string | null;
 }
 
+export interface AuthorStats {
+  total_articles: number;
+  total_views: number;
+  total_likes: number;
+  total_comments: number;
+  total_bookmarks: number;
+  follower_count: number;
+  following_count: number;
+}
+
+export interface UpdateProfileInput {
+  username?: string;
+  display_name?: string;
+  headline?: string;
+  bio?: string;
+  avatar_url?: string;
+  github_url?: string;
+  twitter_url?: string;
+  linkedin_url?: string;
+  website_url?: string;
+  location?: string;
+}
+
 export interface HealthCheckData {
   status: "healthy" | "degraded";
   version: string;
@@ -306,6 +329,58 @@ export async function fetchAuthorArticles(
     return {
       success: false,
       error: { code: "FETCH_FAILED", message: error?.message || "Failed to load author articles" },
+    };
+  }
+}
+
+export async function fetchAuthorStats(username: string): Promise<ApiResponse<{ stats: AuthorStats }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/authors/${username}/stats`, {
+      next: { revalidate: 30 },
+    });
+    return await res.json();
+  } catch (error: any) {
+    return {
+      success: false,
+      error: { code: "FETCH_FAILED", message: error?.message || "Failed to load author stats" },
+    };
+  }
+}
+
+export async function fetchMyProfile(token: string): Promise<ApiResponse<{ author: AuthorDetail }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/authors/me`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return await res.json();
+  } catch (error: any) {
+    return {
+      success: false,
+      error: { code: "FETCH_FAILED", message: error?.message || "Failed to load user profile" },
+    };
+  }
+}
+
+export async function updateAuthorProfile(
+  token: string,
+  data: UpdateProfileInput
+): Promise<ApiResponse<{ author: AuthorDetail }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/authors/me`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+    return await res.json();
+  } catch (error: any) {
+    return {
+      success: false,
+      error: { code: "UPDATE_FAILED", message: error?.message || "Failed to update profile" },
     };
   }
 }

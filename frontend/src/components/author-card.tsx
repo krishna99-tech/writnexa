@@ -52,3 +52,4 @@ export function AuthorCard({ author }: { author: AuthorSummary }) {
     </Card>
   );
 }
+

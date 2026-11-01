@@ -6,6 +6,8 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
+	"github.com/quorix/quorix-backend/internal/middleware"
 	"github.com/quorix/quorix-backend/internal/response"
 )
 
@@ -225,3 +227,94 @@ func (h *Handler) ListAuthorArticles(c *gin.Context) {
 		},
 	})
 }
+
+// GetAuthorStats handles GET /api/v1/authors/:username/stats
+func (h *Handler) GetAuthorStats(c *gin.Context) {
+	username := c.Param("username")
+	stats, err := h.svc.GetAuthorStats(c.Request.Context(), username)
+	if err != nil {
+		if errors.Is(err, ErrAuthorNotFound) {
+			response.Error(c, http.StatusNotFound, "AUTHOR_NOT_FOUND", "Author profile not found.")
+			return
+		}
+		response.Error(c, http.StatusInternalServerError, "FETCH_FAILED", err.Error())
+		return
+	}
+
+	response.JSON(c, http.StatusOK, gin.H{
+		"stats": stats,
+	})
+}
+
+// GetMyProfile handles GET /api/v1/authors/me
+func (h *Handler) GetMyProfile(c *gin.Context) {
+	val, exists := c.Get(middleware.ContextUserID)
+	if !exists {
+		response.Error(c, http.StatusUnauthorized, "UNAUTHORIZED", "Authentication required")
+		return
+	}
+	userID, ok := val.(uuid.UUID)
+	if !ok {
+		response.Error(c, http.StatusInternalServerError, "INVALID_CONTEXT", "Invalid user context")
+		return
+	}
+
+	profile, err := h.svc.GetAuthorProfileByUserID(c.Request.Context(), userID)
+	if err != nil {
+		if errors.Is(err, ErrAuthorNotFound) {
+			response.Error(c, http.StatusNotFound, "PROFILE_NOT_FOUND", "Profile not found.")
+			return
+		}
+		response.Error(c, http.StatusInternalServerError, "FETCH_FAILED", err.Error())
+		return
+	}
+
+	response.JSON(c, http.StatusOK, gin.H{
+		"author": profile,
+	})
+}
+
+// UpdateMyProfile handles PUT /api/v1/authors/me
+func (h *Handler) UpdateMyProfile(c *gin.Context) {
+	val, exists := c.Get(middleware.ContextUserID)
+	if !exists {
+		response.Error(c, http.StatusUnauthorized, "UNAUTHORIZED", "Authentication required")
+		return
+	}
+	userID, ok := val.(uuid.UUID)
+	if !ok {
+		response.Error(c, http.StatusInternalServerError, "INVALID_CONTEXT", "Invalid user context")
+		return
+	}
+
+	var req UpdateProfileInput
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, http.StatusBadRequest, "INVALID_REQUEST", err.Error())
+		return
+	}
+
+	profile, err := h.svc.UpdateProfile(c.Request.Context(), userID, req)
+	if err != nil {
+		if errors.Is(err, ErrInvalidUsername) {
+			response.Error(c, http.StatusBadRequest, "INVALID_USERNAME", err.Error())
+			return
+		}
+		if errors.Is(err, ErrUsernameTaken) {
+			response.Error(c, http.StatusConflict, "USERNAME_TAKEN", err.Error())
+			return
+		}
+		if errors.Is(err, ErrAuthorNotFound) {
+			response.Error(c, http.StatusNotFound, "AUTHOR_NOT_FOUND", "Author profile not found")
+			return
+		}
+		response.Error(c, http.StatusInternalServerError, "UPDATE_FAILED", err.Error())
+		return
+	}
+
+	response.JSON(c, http.StatusOK, gin.H{
+		"message": "Profile updated successfully",
+		"author":  profile,
+	})
+}
+
+

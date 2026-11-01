@@ -71,6 +71,29 @@ WHERE u.status = 'active' AND u.deleted_at IS NULL
 ORDER BY p.article_count DESC, p.follower_count DESC, p.created_at ASC
 LIMIT $1 OFFSET $2;
 
+-- name: UpdateProfileFull :one
+UPDATE profiles
+SET
+    username = COALESCE(sqlc.narg('username'), username),
+    display_name = COALESCE(sqlc.narg('display_name'), display_name),
+    headline = COALESCE(sqlc.narg('headline'), headline),
+    bio = COALESCE(sqlc.narg('bio'), bio),
+    avatar_url = COALESCE(sqlc.narg('avatar_url'), avatar_url),
+    github_url = COALESCE(sqlc.narg('github_url'), github_url),
+    twitter_url = COALESCE(sqlc.narg('twitter_url'), twitter_url),
+    linkedin_url = COALESCE(sqlc.narg('linkedin_url'), linkedin_url),
+    website_url = COALESCE(sqlc.narg('website_url'), website_url),
+    location = COALESCE(sqlc.narg('location'), location),
+    updated_at = NOW()
+WHERE user_id = $1
+RETURNING *;
+
+-- name: CheckUsernameExistsExceptUser :one
+SELECT EXISTS (
+    SELECT 1 FROM profiles
+    WHERE LOWER(username) = LOWER($1) AND user_id != $2
+);
+
 -- name: CountPublicAuthors :one
 SELECT COUNT(*) FROM profiles p
 JOIN users u ON p.user_id = u.id
