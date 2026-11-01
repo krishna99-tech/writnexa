@@ -107,6 +107,14 @@ export default async function ExplorePage({
                 </Link>
               );
             })}
+            <Link href="/feed/following">
+              <Badge
+                variant="outline"
+                className="font-mono text-xs py-1 cursor-pointer border-emerald-800/60 bg-emerald-950/20 text-emerald-400 hover:bg-emerald-950/40 hover:border-emerald-700 transition-colors"
+              >
+                Following Feed &rarr;
+              </Badge>
+            </Link>
           </div>
 
           {/* Active Filter Clear */}

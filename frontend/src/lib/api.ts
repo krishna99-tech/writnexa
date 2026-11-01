@@ -613,3 +613,339 @@ export async function deleteStudioArticle(
     };
   }
 }
+
+// --------------------------------------------------------------------------
+// Phase 8: Community, Social Interactions & Notifications
+// --------------------------------------------------------------------------
+
+export interface CommentDetail {
+  id: string;
+  article_id: string;
+  author_id: string;
+  parent_id?: string | null;
+  content: string;
+  is_edited: boolean;
+  is_deleted: boolean;
+  created_at: string;
+  updated_at: string;
+  username: string;
+  display_name: string;
+  avatar_url?: string | null;
+}
+
+export interface CommentThread extends CommentDetail {
+  replies: CommentDetail[];
+}
+
+export interface BookmarkedArticle extends ArticleSummary {
+  bookmarked_at: string;
+}
+
+export interface InAppNotificationItem {
+  id: string;
+  recipient_id: string;
+  actor_id: string;
+  type: string;
+  article_id?: string | null;
+  comment_id?: string | null;
+  title: string;
+  message: string;
+  action_url: string;
+  is_read: boolean;
+  created_at: string;
+  actor_username: string;
+  actor_display_name: string;
+  actor_avatar_url?: string | null;
+}
+
+export interface InteractionStatus {
+  liked: boolean;
+  bookmarked: boolean;
+  following_author: boolean;
+}
+
+export async function toggleLike(
+  token: string,
+  articleId: string
+): Promise<ApiResponse<{ liked: boolean; likes_count: number }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/articles/${articleId}/like`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return await res.json();
+  } catch (error: any) {
+    return {
+      success: false,
+      error: { code: "LIKE_FAILED", message: error?.message || "Failed to toggle like" },
+    };
+  }
+}
+
+export async function toggleBookmark(
+  token: string,
+  articleId: string
+): Promise<ApiResponse<{ bookmarked: boolean; bookmarks_count: number }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/articles/${articleId}/bookmark`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return await res.json();
+  } catch (error: any) {
+    return {
+      success: false,
+      error: { code: "BOOKMARK_FAILED", message: error?.message || "Failed to toggle bookmark" },
+    };
+  }
+}
+
+export async function fetchInteractionStatus(
+  token: string,
+  articleId: string,
+  authorId?: string
+): Promise<ApiResponse<{ interaction: InteractionStatus }>> {
+  try {
+    const query = authorId ? `?author_id=${encodeURIComponent(authorId)}` : "";
+    const res = await fetch(`${API_BASE_URL}/api/v1/articles/${articleId}/interaction${query}`, {
+      method: "GET",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return await res.json();
+  } catch (error: any) {
+    return {
+      success: false,
+      error: { code: "FETCH_FAILED", message: error?.message || "Failed to fetch interaction status" },
+    };
+  }
+}
+
+export async function toggleFollowAuthor(
+  token: string,
+  username: string
+): Promise<ApiResponse<{ following: boolean; follower_count: number }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/authors/${encodeURIComponent(username)}/follow`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return await res.json();
+  } catch (error: any) {
+    return {
+      success: false,
+      error: { code: "FOLLOW_FAILED", message: error?.message || "Failed to toggle follow" },
+    };
+  }
+}
+
+export async function fetchArticleComments(
+  articleId: string
+): Promise<ApiResponse<{ comments: CommentThread[]; count: number }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/articles/${articleId}/comments`, {
+      method: "GET",
+      cache: "no-store",
+    });
+    return await res.json();
+  } catch (error: any) {
+    return {
+      success: false,
+      error: { code: "FETCH_FAILED", message: error?.message || "Failed to fetch comments" },
+    };
+  }
+}
+
+export async function createComment(
+  token: string,
+  articleId: string,
+  content: string,
+  parentId?: string
+): Promise<ApiResponse<{ comment: CommentDetail; message: string }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/articles/${articleId}/comments`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        content,
+        parent_id: parentId || undefined,
+      }),
+    });
+    return await res.json();
+  } catch (error: any) {
+    return {
+      success: false,
+      error: { code: "COMMENT_FAILED", message: error?.message || "Failed to post comment" },
+    };
+  }
+}
+
+export async function updateComment(
+  token: string,
+  commentId: string,
+  content: string
+): Promise<ApiResponse<{ comment: CommentDetail; message: string }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/comments/${commentId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ content }),
+    });
+    return await res.json();
+  } catch (error: any) {
+    return {
+      success: false,
+      error: { code: "UPDATE_FAILED", message: error?.message || "Failed to update comment" },
+    };
+  }
+}
+
+export async function deleteComment(
+  token: string,
+  commentId: string
+): Promise<ApiResponse<{ message: string }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/comments/${commentId}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return await res.json();
+  } catch (error: any) {
+    return {
+      success: false,
+      error: { code: "DELETE_FAILED", message: error?.message || "Failed to delete comment" },
+    };
+  }
+}
+
+export async function fetchFollowingFeed(
+  token: string,
+  page = 1,
+  perPage = 10
+): Promise<ApiResponse<{ articles: ArticleSummary[] }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/feed/following?page=${page}&per_page=${perPage}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return await res.json();
+  } catch (error: any) {
+    return {
+      success: false,
+      error: { code: "FEED_FAILED", message: error?.message || "Failed to fetch following feed" },
+    };
+  }
+}
+
+export async function fetchBookmarks(
+  token: string,
+  page = 1,
+  perPage = 10
+): Promise<ApiResponse<{ bookmarks: BookmarkedArticle[] }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/library/bookmarks?page=${page}&per_page=${perPage}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return await res.json();
+  } catch (error: any) {
+    return {
+      success: false,
+      error: { code: "BOOKMARKS_FAILED", message: error?.message || "Failed to fetch bookmarks" },
+    };
+  }
+}
+
+export async function fetchNotifications(
+  token: string,
+  page = 1,
+  perPage = 20
+): Promise<ApiResponse<{ notifications: InAppNotificationItem[]; meta: { unread_count: number } }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/notifications?page=${page}&per_page=${perPage}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return await res.json();
+  } catch (error: any) {
+    return {
+      success: false,
+      error: { code: "NOTIFICATIONS_FAILED", message: error?.message || "Failed to fetch notifications" },
+    };
+  }
+}
+
+export async function fetchUnreadNotificationCount(
+  token: string
+): Promise<ApiResponse<{ unread_count: number }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/notifications/unread-count`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return await res.json();
+  } catch (error: any) {
+    return {
+      success: false,
+      error: { code: "COUNT_FAILED", message: error?.message || "Failed to fetch unread count" },
+    };
+  }
+}
+
+export async function markNotificationRead(
+  token: string,
+  id: string
+): Promise<ApiResponse<{ message: string }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/notifications/${id}/read`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return await res.json();
+  } catch (error: any) {
+    return {
+      success: false,
+      error: { code: "MARK_FAILED", message: error?.message || "Failed to mark notification as read" },
+    };
+  }
+}
+
+export async function markAllNotificationsRead(
+  token: string
+): Promise<ApiResponse<{ message: string }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/notifications/read-all`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return await res.json();
+  } catch (error: any) {
+    return {
+      success: false,
+      error: { code: "MARK_ALL_FAILED", message: error?.message || "Failed to mark all as read" },
+    };
+  }
+}

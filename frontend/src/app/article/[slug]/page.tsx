@@ -16,6 +16,11 @@ import {
   ExternalLink,
   MessageSquare,
 } from "lucide-react";
+import {
+  ArticleActionsBar,
+  ArticleCommentsSection,
+} from "@/components/article-interactions";
+import { FollowButton } from "@/components/follow-button";
 
 export const revalidate = 30;
 
@@ -161,8 +166,9 @@ export default async function ArticleDetailPage({
             </div>
           </Link>
 
-          {/* Social Share Buttons */}
+          {/* Author Follow & Share */}
           <div className="flex items-center gap-2">
+            <FollowButton targetUsername={article.author.username} />
             <a
               href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(
                 article.title
@@ -177,6 +183,17 @@ export default async function ArticleDetailPage({
             </a>
           </div>
         </div>
+
+        {/* Top Interactive Actions Bar */}
+        <ArticleActionsBar
+          articleId={article.id}
+          articleSlug={article.slug}
+          articleTitle={article.title}
+          authorId={article.author.username}
+          initialLikesCount={article.likes_count}
+          initialBookmarksCount={article.bookmarks_count}
+          initialCommentsCount={article.comments_count}
+        />
       </header>
 
       {/* Main Technical Article Body */}
@@ -209,57 +226,22 @@ export default async function ArticleDetailPage({
         </div>
       )}
 
-      {/* Community Engagement & Guest Participation Prompt */}
-      <div className="p-6 rounded-xl border border-zinc-800 bg-zinc-900/40 space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-lg bg-emerald-950/50 border border-emerald-800/80 text-emerald-400">
-              <Terminal className="w-5 h-5" />
-            </div>
-            <div>
-              <h3 className="text-base font-bold text-zinc-100">
-                Engage with this publication
-              </h3>
-              <p className="text-xs text-zinc-400 font-sans">
-                Join {article.likes_count} engineers who found this useful.
-              </p>
-            </div>
-          </div>
+      {/* Bottom Actions Bar */}
+      <ArticleActionsBar
+        articleId={article.id}
+        articleSlug={article.slug}
+        articleTitle={article.title}
+        authorId={article.author.username}
+        initialLikesCount={article.likes_count}
+        initialBookmarksCount={article.bookmarks_count}
+        initialCommentsCount={article.comments_count}
+      />
 
-          <div className="flex items-center gap-2">
-            <Link href={`/login?return_to=/article/${article.slug}`}>
-              <Button
-                variant="outline"
-                size="sm"
-                className="border-zinc-700 bg-zinc-900 hover:bg-zinc-800 text-zinc-200 gap-1.5 font-mono text-xs"
-              >
-                <Heart className="w-3.5 h-3.5 text-rose-400" />
-                <span>Like ({article.likes_count})</span>
-              </Button>
-            </Link>
-            <Link href={`/login?return_to=/article/${article.slug}`}>
-              <Button
-                variant="outline"
-                size="sm"
-                className="border-zinc-700 bg-zinc-900 hover:bg-zinc-800 text-zinc-200 gap-1.5 font-mono text-xs"
-              >
-                <Bookmark className="w-3.5 h-3.5 text-amber-400" />
-                <span>Bookmark</span>
-              </Button>
-            </Link>
-          </div>
-        </div>
-
-        <div className="pt-3 border-t border-zinc-800/80 flex items-center justify-between text-xs font-mono text-zinc-500">
-          <span>READ WITHOUT LOGIN &bull; PARTICIPATE WITH LOGIN</span>
-          <Link
-            href={`/login?return_to=/article/${article.slug}`}
-            className="text-emerald-400 hover:underline"
-          >
-            Sign in to comment &rarr;
-          </Link>
-        </div>
-      </div>
+      {/* Interactive Comments & Discussions */}
+      <ArticleCommentsSection
+        articleId={article.id}
+        articleSlug={article.slug}
+      />
 
       {/* Bottom Author Shelf */}
       <div className="p-6 rounded-xl border border-zinc-800 bg-zinc-900/40 flex items-start gap-4">
@@ -277,7 +259,7 @@ export default async function ArticleDetailPage({
         )}
 
         <div className="space-y-2 min-w-0 flex-1">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <Link
                 href={`/author/${article.author.username}`}
@@ -289,11 +271,14 @@ export default async function ArticleDetailPage({
                 @{article.author.username}
               </span>
             </div>
-            <Link href={`/author/${article.author.username}`}>
-              <Button variant="outline" size="sm" className="border-zinc-700 font-mono text-xs">
-                View Profile
-              </Button>
-            </Link>
+            <div className="flex items-center gap-2">
+              <FollowButton targetUsername={article.author.username} />
+              <Link href={`/author/${article.author.username}`}>
+                <Button variant="outline" size="sm" className="border-zinc-700 font-mono text-xs">
+                  View Profile
+                </Button>
+              </Link>
+            </div>
           </div>
 
           {article.author.headline && (

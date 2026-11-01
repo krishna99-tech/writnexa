@@ -22,3 +22,4 @@ func RegisterRoutes(r *gin.RouterGroup, h *Handler, cfg *config.Config) {
 		studio.POST("/articles/:id/archive", h.ArchiveArticle)
 	}
 }
+

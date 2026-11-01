@@ -11,6 +11,46 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countCommentsByArticleID = `-- name: CountCommentsByArticleID :one
+SELECT COUNT(*) FROM comments
+WHERE article_id = $1 AND is_deleted = FALSE
+`
+
+func (q *Queries) CountCommentsByArticleID(ctx context.Context, articleID pgtype.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countCommentsByArticleID, articleID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countFollowingFeed = `-- name: CountFollowingFeed :one
+SELECT COUNT(*)
+FROM articles a
+JOIN follows f ON a.author_id = f.following_id
+WHERE f.follower_id = $1
+  AND a.status = 'published'
+  AND a.deleted_at IS NULL
+`
+
+func (q *Queries) CountFollowingFeed(ctx context.Context, followerID pgtype.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countFollowingFeed, followerID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countUnreadNotifications = `-- name: CountUnreadNotifications :one
+SELECT COUNT(*) FROM in_app_notifications
+WHERE recipient_id = $1 AND is_read = FALSE
+`
+
+func (q *Queries) CountUnreadNotifications(ctx context.Context, recipientID pgtype.UUID) (int64, error) {
+	row := q.db.QueryRow(ctx, countUnreadNotifications, recipientID)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
 const createBookmark = `-- name: CreateBookmark :one
 INSERT INTO bookmarks (user_id, article_id)
 VALUES ($1, $2)
@@ -90,6 +130,60 @@ func (q *Queries) CreateFollow(ctx context.Context, arg CreateFollowParams) (Fol
 	return i, err
 }
 
+const createInAppNotification = `-- name: CreateInAppNotification :one
+INSERT INTO in_app_notifications (
+    recipient_id,
+    actor_id,
+    type,
+    article_id,
+    comment_id,
+    title,
+    message,
+    action_url
+) VALUES (
+    $1, $2, $3, $4, $5, $6, $7, $8
+) RETURNING id, recipient_id, actor_id, type, article_id, comment_id, title, message, action_url, is_read, created_at
+`
+
+type CreateInAppNotificationParams struct {
+	RecipientID pgtype.UUID `json:"recipient_id"`
+	ActorID     pgtype.UUID `json:"actor_id"`
+	Type        string      `json:"type"`
+	ArticleID   pgtype.UUID `json:"article_id"`
+	CommentID   pgtype.UUID `json:"comment_id"`
+	Title       string      `json:"title"`
+	Message     string      `json:"message"`
+	ActionUrl   string      `json:"action_url"`
+}
+
+func (q *Queries) CreateInAppNotification(ctx context.Context, arg CreateInAppNotificationParams) (InAppNotification, error) {
+	row := q.db.QueryRow(ctx, createInAppNotification,
+		arg.RecipientID,
+		arg.ActorID,
+		arg.Type,
+		arg.ArticleID,
+		arg.CommentID,
+		arg.Title,
+		arg.Message,
+		arg.ActionUrl,
+	)
+	var i InAppNotification
+	err := row.Scan(
+		&i.ID,
+		&i.RecipientID,
+		&i.ActorID,
+		&i.Type,
+		&i.ArticleID,
+		&i.CommentID,
+		&i.Title,
+		&i.Message,
+		&i.ActionUrl,
+		&i.IsRead,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const createLike = `-- name: CreateLike :one
 INSERT INTO likes (user_id, article_id)
 VALUES ($1, $2)
@@ -124,6 +218,35 @@ func (q *Queries) DeleteBookmark(ctx context.Context, arg DeleteBookmarkParams) 
 	return err
 }
 
+const deleteComment = `-- name: DeleteComment :one
+UPDATE comments
+SET is_deleted = TRUE, content = '[deleted]', updated_at = NOW()
+WHERE id = $1 AND author_id = $2
+RETURNING id, article_id, author_id, parent_id, content, is_edited, is_deleted, created_at, updated_at
+`
+
+type DeleteCommentParams struct {
+	ID       pgtype.UUID `json:"id"`
+	AuthorID pgtype.UUID `json:"author_id"`
+}
+
+func (q *Queries) DeleteComment(ctx context.Context, arg DeleteCommentParams) (Comment, error) {
+	row := q.db.QueryRow(ctx, deleteComment, arg.ID, arg.AuthorID)
+	var i Comment
+	err := row.Scan(
+		&i.ID,
+		&i.ArticleID,
+		&i.AuthorID,
+		&i.ParentID,
+		&i.Content,
+		&i.IsEdited,
+		&i.IsDeleted,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const deleteFollow = `-- name: DeleteFollow :exec
 DELETE FROM follows
 WHERE follower_id = $1 AND following_id = $2
@@ -152,6 +275,48 @@ type DeleteLikeParams struct {
 func (q *Queries) DeleteLike(ctx context.Context, arg DeleteLikeParams) error {
 	_, err := q.db.Exec(ctx, deleteLike, arg.UserID, arg.ArticleID)
 	return err
+}
+
+const getCommentByID = `-- name: GetCommentByID :one
+SELECT c.id, c.article_id, c.author_id, c.parent_id, c.content, c.is_edited, c.is_deleted, c.created_at, c.updated_at, p.username, p.display_name, p.avatar_url
+FROM comments c
+JOIN profiles p ON c.author_id = p.user_id
+WHERE c.id = $1
+`
+
+type GetCommentByIDRow struct {
+	ID          pgtype.UUID        `json:"id"`
+	ArticleID   pgtype.UUID        `json:"article_id"`
+	AuthorID    pgtype.UUID        `json:"author_id"`
+	ParentID    pgtype.UUID        `json:"parent_id"`
+	Content     string             `json:"content"`
+	IsEdited    bool               `json:"is_edited"`
+	IsDeleted   bool               `json:"is_deleted"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+	Username    string             `json:"username"`
+	DisplayName string             `json:"display_name"`
+	AvatarUrl   pgtype.Text        `json:"avatar_url"`
+}
+
+func (q *Queries) GetCommentByID(ctx context.Context, id pgtype.UUID) (GetCommentByIDRow, error) {
+	row := q.db.QueryRow(ctx, getCommentByID, id)
+	var i GetCommentByIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.ArticleID,
+		&i.AuthorID,
+		&i.ParentID,
+		&i.Content,
+		&i.IsEdited,
+		&i.IsDeleted,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.Username,
+		&i.DisplayName,
+		&i.AvatarUrl,
+	)
+	return i, err
 }
 
 const hasUserBookmarkedArticle = `-- name: HasUserBookmarkedArticle :one
@@ -359,6 +524,196 @@ func (q *Queries) ListCommentsByArticleID(ctx context.Context, articleID pgtype.
 	return items, nil
 }
 
+const listFollowingFeed = `-- name: ListFollowingFeed :many
+SELECT 
+    a.id, a.author_id, a.publication_id, a.category_id, a.title, a.slug, a.subtitle, a.content, a.content_html, a.cover_image_url, a.canonical_url, a.status, a.reading_time_minutes, a.views_count, a.likes_count, a.bookmarks_count, a.comments_count, a.featured, a.search_vector, a.published_at, a.created_at, a.updated_at, a.deleted_at,
+    p.username as author_username,
+    p.display_name as author_display_name,
+    p.avatar_url as author_avatar_url,
+    p.headline as author_headline,
+    c.name as category_name,
+    c.slug as category_slug
+FROM articles a
+JOIN follows f ON a.author_id = f.following_id
+JOIN profiles p ON a.author_id = p.user_id
+LEFT JOIN categories c ON a.category_id = c.id
+WHERE f.follower_id = $1
+  AND a.status = 'published'
+  AND a.deleted_at IS NULL
+ORDER BY a.published_at DESC
+LIMIT $2 OFFSET $3
+`
+
+type ListFollowingFeedParams struct {
+	FollowerID pgtype.UUID `json:"follower_id"`
+	Limit      int32       `json:"limit"`
+	Offset     int32       `json:"offset"`
+}
+
+type ListFollowingFeedRow struct {
+	ID                 pgtype.UUID        `json:"id"`
+	AuthorID           pgtype.UUID        `json:"author_id"`
+	PublicationID      pgtype.UUID        `json:"publication_id"`
+	CategoryID         pgtype.UUID        `json:"category_id"`
+	Title              string             `json:"title"`
+	Slug               string             `json:"slug"`
+	Subtitle           pgtype.Text        `json:"subtitle"`
+	Content            string             `json:"content"`
+	ContentHtml        string             `json:"content_html"`
+	CoverImageUrl      pgtype.Text        `json:"cover_image_url"`
+	CanonicalUrl       pgtype.Text        `json:"canonical_url"`
+	Status             string             `json:"status"`
+	ReadingTimeMinutes int32              `json:"reading_time_minutes"`
+	ViewsCount         int32              `json:"views_count"`
+	LikesCount         int32              `json:"likes_count"`
+	BookmarksCount     int32              `json:"bookmarks_count"`
+	CommentsCount      int32              `json:"comments_count"`
+	Featured           bool               `json:"featured"`
+	SearchVector       interface{}        `json:"search_vector"`
+	PublishedAt        pgtype.Timestamptz `json:"published_at"`
+	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+	DeletedAt          pgtype.Timestamptz `json:"deleted_at"`
+	AuthorUsername     string             `json:"author_username"`
+	AuthorDisplayName  string             `json:"author_display_name"`
+	AuthorAvatarUrl    pgtype.Text        `json:"author_avatar_url"`
+	AuthorHeadline     pgtype.Text        `json:"author_headline"`
+	CategoryName       pgtype.Text        `json:"category_name"`
+	CategorySlug       pgtype.Text        `json:"category_slug"`
+}
+
+func (q *Queries) ListFollowingFeed(ctx context.Context, arg ListFollowingFeedParams) ([]ListFollowingFeedRow, error) {
+	rows, err := q.db.Query(ctx, listFollowingFeed, arg.FollowerID, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListFollowingFeedRow{}
+	for rows.Next() {
+		var i ListFollowingFeedRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.AuthorID,
+			&i.PublicationID,
+			&i.CategoryID,
+			&i.Title,
+			&i.Slug,
+			&i.Subtitle,
+			&i.Content,
+			&i.ContentHtml,
+			&i.CoverImageUrl,
+			&i.CanonicalUrl,
+			&i.Status,
+			&i.ReadingTimeMinutes,
+			&i.ViewsCount,
+			&i.LikesCount,
+			&i.BookmarksCount,
+			&i.CommentsCount,
+			&i.Featured,
+			&i.SearchVector,
+			&i.PublishedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+			&i.AuthorUsername,
+			&i.AuthorDisplayName,
+			&i.AuthorAvatarUrl,
+			&i.AuthorHeadline,
+			&i.CategoryName,
+			&i.CategorySlug,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const listInAppNotifications = `-- name: ListInAppNotifications :many
+SELECT 
+    n.id, n.recipient_id, n.actor_id, n.type, n.article_id, n.comment_id, n.title, n.message, n.action_url, n.is_read, n.created_at,
+    p.username as actor_username,
+    p.display_name as actor_display_name,
+    p.avatar_url as actor_avatar_url
+FROM in_app_notifications n
+JOIN profiles p ON n.actor_id = p.user_id
+WHERE n.recipient_id = $1
+ORDER BY n.created_at DESC
+LIMIT $2 OFFSET $3
+`
+
+type ListInAppNotificationsParams struct {
+	RecipientID pgtype.UUID `json:"recipient_id"`
+	Limit       int32       `json:"limit"`
+	Offset      int32       `json:"offset"`
+}
+
+type ListInAppNotificationsRow struct {
+	ID               pgtype.UUID        `json:"id"`
+	RecipientID      pgtype.UUID        `json:"recipient_id"`
+	ActorID          pgtype.UUID        `json:"actor_id"`
+	Type             string             `json:"type"`
+	ArticleID        pgtype.UUID        `json:"article_id"`
+	CommentID        pgtype.UUID        `json:"comment_id"`
+	Title            string             `json:"title"`
+	Message          string             `json:"message"`
+	ActionUrl        string             `json:"action_url"`
+	IsRead           bool               `json:"is_read"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	ActorUsername    string             `json:"actor_username"`
+	ActorDisplayName string             `json:"actor_display_name"`
+	ActorAvatarUrl   pgtype.Text        `json:"actor_avatar_url"`
+}
+
+func (q *Queries) ListInAppNotifications(ctx context.Context, arg ListInAppNotificationsParams) ([]ListInAppNotificationsRow, error) {
+	rows, err := q.db.Query(ctx, listInAppNotifications, arg.RecipientID, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListInAppNotificationsRow{}
+	for rows.Next() {
+		var i ListInAppNotificationsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.RecipientID,
+			&i.ActorID,
+			&i.Type,
+			&i.ArticleID,
+			&i.CommentID,
+			&i.Title,
+			&i.Message,
+			&i.ActionUrl,
+			&i.IsRead,
+			&i.CreatedAt,
+			&i.ActorUsername,
+			&i.ActorDisplayName,
+			&i.ActorAvatarUrl,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const markAllNotificationsAsRead = `-- name: MarkAllNotificationsAsRead :exec
+UPDATE in_app_notifications
+SET is_read = TRUE
+WHERE recipient_id = $1
+`
+
+func (q *Queries) MarkAllNotificationsAsRead(ctx context.Context, recipientID pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, markAllNotificationsAsRead, recipientID)
+	return err
+}
+
 const markCommentDeleted = `-- name: MarkCommentDeleted :exec
 UPDATE comments
 SET is_deleted = TRUE, content = '[deleted]', updated_at = NOW()
@@ -368,4 +723,50 @@ WHERE id = $1
 func (q *Queries) MarkCommentDeleted(ctx context.Context, id pgtype.UUID) error {
 	_, err := q.db.Exec(ctx, markCommentDeleted, id)
 	return err
+}
+
+const markNotificationAsRead = `-- name: MarkNotificationAsRead :exec
+UPDATE in_app_notifications
+SET is_read = TRUE
+WHERE id = $1 AND recipient_id = $2
+`
+
+type MarkNotificationAsReadParams struct {
+	ID          pgtype.UUID `json:"id"`
+	RecipientID pgtype.UUID `json:"recipient_id"`
+}
+
+func (q *Queries) MarkNotificationAsRead(ctx context.Context, arg MarkNotificationAsReadParams) error {
+	_, err := q.db.Exec(ctx, markNotificationAsRead, arg.ID, arg.RecipientID)
+	return err
+}
+
+const updateCommentContent = `-- name: UpdateCommentContent :one
+UPDATE comments
+SET content = $2, is_edited = TRUE, updated_at = NOW()
+WHERE id = $1 AND author_id = $3 AND is_deleted = FALSE
+RETURNING id, article_id, author_id, parent_id, content, is_edited, is_deleted, created_at, updated_at
+`
+
+type UpdateCommentContentParams struct {
+	ID       pgtype.UUID `json:"id"`
+	Content  string      `json:"content"`
+	AuthorID pgtype.UUID `json:"author_id"`
+}
+
+func (q *Queries) UpdateCommentContent(ctx context.Context, arg UpdateCommentContentParams) (Comment, error) {
+	row := q.db.QueryRow(ctx, updateCommentContent, arg.ID, arg.Content, arg.AuthorID)
+	var i Comment
+	err := row.Scan(
+		&i.ID,
+		&i.ArticleID,
+		&i.AuthorID,
+		&i.ParentID,
+		&i.Content,
+		&i.IsEdited,
+		&i.IsDeleted,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }

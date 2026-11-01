@@ -270,3 +270,4 @@ func getContextUserID(c *gin.Context) (uuid.UUID, bool) {
 	}
 	return userID, true
 }
+

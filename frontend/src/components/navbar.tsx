@@ -1,13 +1,49 @@
 "use client";
 
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
-import { BookOpen, PenTool, Shield, User, LogOut, Settings } from "lucide-react";
+import { fetchUnreadNotificationCount } from "@/lib/api";
+import {
+  BookOpen,
+  PenTool,
+  Shield,
+  User,
+  LogOut,
+  Settings,
+  Bell,
+  Bookmark,
+  Rss,
+} from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 
 export function Navbar() {
-  const { user, profile, logout, isLoading } = useAuth();
+  const { user, profile, logout, isLoading, accessToken } = useAuth();
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+
+  useEffect(() => {
+    if (!accessToken) {
+      setUnreadCount(0);
+      return;
+    }
+
+    fetchUnreadNotificationCount(accessToken).then((res) => {
+      if (res.success && res.data) {
+        setUnreadCount(res.data.unread_count || 0);
+      }
+    });
+
+    const interval = setInterval(() => {
+      fetchUnreadNotificationCount(accessToken).then((res) => {
+        if (res.success && res.data) {
+          setUnreadCount(res.data.unread_count || 0);
+        }
+      });
+    }, 45000);
+
+    return () => clearInterval(interval);
+  }, [accessToken]);
 
   return (
     <header className="sticky top-0 z-50 border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur-md">
@@ -33,6 +69,15 @@ export function Navbar() {
               <BookOpen className="w-4 h-4" />
               <span>Explore</span>
             </Link>
+            {user && (
+              <Link
+                href="/feed/following"
+                className="flex items-center gap-1.5 hover:text-zinc-100 transition-colors text-emerald-400/90 hover:text-emerald-300"
+              >
+                <Rss className="w-3.5 h-3.5" />
+                <span>Following</span>
+              </Link>
+            )}
             <Link
               href="/topics"
               className="hover:text-zinc-100 transition-colors"
@@ -68,8 +113,35 @@ export function Navbar() {
           {isLoading ? (
             <div className="w-20 h-8 rounded bg-zinc-900 animate-pulse" />
           ) : user ? (
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-2 text-xs font-mono">
+            <div className="flex items-center gap-2 sm:gap-3">
+              {/* Notification Bell Icon */}
+              <Link href="/notifications">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="relative h-8 w-8 p-0 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900"
+                  title="Notifications"
+                >
+                  <Bell className="w-4 h-4" />
+                  {unreadCount > 0 && (
+                    <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-zinc-950" />
+                  )}
+                </Button>
+              </Link>
+
+              {/* Bookmarks Icon */}
+              <Link href="/library/bookmarks">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-8 w-8 p-0 text-zinc-400 hover:text-amber-400 hover:bg-zinc-900"
+                  title="Saved Bookmarks"
+                >
+                  <Bookmark className="w-4 h-4" />
+                </Button>
+              </Link>
+
+              <div className="hidden lg:flex items-center gap-2 text-xs font-mono">
                 <span className="text-zinc-400">@{profile?.username}</span>
                 <Badge
                   variant={

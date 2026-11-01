@@ -117,6 +117,20 @@ type Follow struct {
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 }
 
+type InAppNotification struct {
+	ID          pgtype.UUID        `json:"id"`
+	RecipientID pgtype.UUID        `json:"recipient_id"`
+	ActorID     pgtype.UUID        `json:"actor_id"`
+	Type        string             `json:"type"`
+	ArticleID   pgtype.UUID        `json:"article_id"`
+	CommentID   pgtype.UUID        `json:"comment_id"`
+	Title       string             `json:"title"`
+	Message     string             `json:"message"`
+	ActionUrl   string             `json:"action_url"`
+	IsRead      bool               `json:"is_read"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+}
+
 type Like struct {
 	UserID    pgtype.UUID        `json:"user_id"`
 	ArticleID pgtype.UUID        `json:"article_id"`

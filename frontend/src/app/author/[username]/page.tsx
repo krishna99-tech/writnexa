@@ -20,6 +20,7 @@ import {
   Bookmark,
   Calendar,
 } from "lucide-react";
+import { FollowButton } from "@/components/follow-button";
 
 export const revalidate = 30;
 
@@ -128,12 +129,10 @@ export default async function AuthorProfilePage({
             </div>
           </div>
 
-          <Link href={`/login?return_to=/author/${author.username}`}>
-            <Button className="bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-semibold gap-2 font-mono text-xs">
-              <UserPlus className="w-4 h-4" />
-              <span>Follow Author</span>
-            </Button>
-          </Link>
+          <FollowButton
+            targetUsername={author.username}
+            initialFollowerCount={stats?.follower_count ?? author.follower_count}
+          />
         </div>
 
         {author.headline && (
