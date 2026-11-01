@@ -24,6 +24,20 @@ type AdminAuditLog struct {
 	CreatedAt  pgtype.Timestamptz `json:"created_at"`
 }
 
+type AnalyticsEvent struct {
+	ID          pgtype.UUID        `json:"id"`
+	EventType   string             `json:"event_type"`
+	Path        string             `json:"path"`
+	ArticleID   pgtype.UUID        `json:"article_id"`
+	AuthorID    pgtype.UUID        `json:"author_id"`
+	UserID      pgtype.UUID        `json:"user_id"`
+	VisitorHash string             `json:"visitor_hash"`
+	Referrer    pgtype.Text        `json:"referrer"`
+	Source      string             `json:"source"`
+	DeviceType  string             `json:"device_type"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+}
+
 type Article struct {
 	ID                 pgtype.UUID        `json:"id"`
 	AuthorID           pgtype.UUID        `json:"author_id"`
@@ -48,6 +62,19 @@ type Article struct {
 	CreatedAt          pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
 	DeletedAt          pgtype.Timestamptz `json:"deleted_at"`
+}
+
+type ArticleDailyMetric struct {
+	ArticleID      pgtype.UUID        `json:"article_id"`
+	AuthorID       pgtype.UUID        `json:"author_id"`
+	Date           pgtype.Date        `json:"date"`
+	Views          int32              `json:"views"`
+	UniqueVisitors int32              `json:"unique_visitors"`
+	Likes          int32              `json:"likes"`
+	Bookmarks      int32              `json:"bookmarks"`
+	Comments       int32              `json:"comments"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
 }
 
 type ArticleTag struct {
@@ -183,6 +210,20 @@ type PasswordResetToken struct {
 	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
 	UsedAt    pgtype.Timestamptz `json:"used_at"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type PlatformDailyMetric struct {
+	Date              pgtype.Date        `json:"date"`
+	PageViews         int32              `json:"page_views"`
+	ArticleViews      int32              `json:"article_views"`
+	UniqueVisitors    int32              `json:"unique_visitors"`
+	NewRegistrations  int32              `json:"new_registrations"`
+	ActiveUsers       int32              `json:"active_users"`
+	PublishedArticles int32              `json:"published_articles"`
+	CommentsPosted    int32              `json:"comments_posted"`
+	LikesGiven        int32              `json:"likes_given"`
+	CreatedAt         pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
 }
 
 type PlatformSetting struct {

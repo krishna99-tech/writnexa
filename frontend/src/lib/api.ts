@@ -1397,3 +1397,153 @@ export async function updatePlatformSetting(
     return { success: false, error: { code: "UPDATE_FAILED", message: error?.message || "Failed to update setting" } };
   }
 }
+
+// --------------------------------------------------------------------------
+// Phase 11: Platform and Author Analytics
+// --------------------------------------------------------------------------
+
+export interface MetricTimeseriesPoint {
+  date: string;
+  total_views: number;
+  article_views?: number;
+  unique_visitors: number;
+}
+
+export interface TrafficSourceBreakdown {
+  source: string;
+  count: number;
+  percentage: number;
+}
+
+export interface TopCategoryMetric {
+  id: string;
+  name: string;
+  slug: string;
+  views_count: number;
+  articles_count: number;
+}
+
+export interface TopArticleMetric {
+  id: string;
+  title: string;
+  slug: string;
+  author_username: string;
+  author_display_name: string;
+  views_count: number;
+  unique_visitors: number;
+}
+
+export interface PlatformAnalyticsResult {
+  range: string;
+  start_date: string;
+  end_date: string;
+  total_events: number;
+  total_page_views: number;
+  total_article_views: number;
+  unique_visitors: number;
+  new_registrations: number;
+  published_articles: number;
+  comments_posted: number;
+  likes_given: number;
+  timeseries: MetricTimeseriesPoint[];
+  traffic_sources: TrafficSourceBreakdown[];
+  top_categories: TopCategoryMetric[];
+  top_articles: TopArticleMetric[];
+}
+
+export interface AuthorArticlePerformanceItem {
+  id: string;
+  title: string;
+  slug: string;
+  reading_time_minutes: number;
+  status: string;
+  published_at?: string | null;
+  views_count: number;
+  unique_visitors: number;
+  likes_count: number;
+  bookmarks_count: number;
+  comments_count: number;
+}
+
+export interface AuthorAnalyticsResult {
+  range: string;
+  start_date: string;
+  end_date: string;
+  total_views: number;
+  unique_visitors: number;
+  total_likes: number;
+  total_bookmarks: number;
+  total_comments: number;
+  engagement_rate: number;
+  timeseries: MetricTimeseriesPoint[];
+  traffic_sources: TrafficSourceBreakdown[];
+  articles: AuthorArticlePerformanceItem[];
+}
+
+export async function recordAnalyticsEvent(data: {
+  event_type: string;
+  path: string;
+  article_id?: string;
+  author_id?: string;
+  token?: string;
+}): Promise<ApiResponse<{ status: string }>> {
+  try {
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (data.token) {
+      headers["Authorization"] = `Bearer ${data.token}`;
+    }
+    const res = await fetch(`${API_BASE_URL}/api/v1/analytics/collect`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify({
+        event_type: data.event_type,
+        path: data.path,
+        article_id: data.article_id,
+        author_id: data.author_id,
+      }),
+    });
+    return await res.json();
+  } catch (error: any) {
+    return { success: false, error: { code: "RECORD_FAILED", message: error?.message || "Failed to record event" } };
+  }
+}
+
+export async function fetchPlatformAnalytics(
+  token: string,
+  params: { range?: string; from?: string; to?: string }
+): Promise<ApiResponse<{ analytics: PlatformAnalyticsResult }>> {
+  try {
+    const qp = new URLSearchParams();
+    if (params.range) qp.set("range", params.range);
+    if (params.from) qp.set("from", params.from);
+    if (params.to) qp.set("to", params.to);
+
+    const res = await fetch(`${API_BASE_URL}/api/v1/admin/analytics?${qp.toString()}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    return await res.json();
+  } catch (error: any) {
+    return { success: false, error: { code: "FETCH_FAILED", message: error?.message || "Failed to fetch analytics" } };
+  }
+}
+
+export async function fetchAuthorAnalytics(
+  token: string,
+  params: { range?: string; from?: string; to?: string }
+): Promise<ApiResponse<{ analytics: AuthorAnalyticsResult }>> {
+  try {
+    const qp = new URLSearchParams();
+    if (params.range) qp.set("range", params.range);
+    if (params.from) qp.set("from", params.from);
+    if (params.to) qp.set("to", params.to);
+
+    const res = await fetch(`${API_BASE_URL}/api/v1/studio/analytics?${qp.toString()}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    return await res.json();
+  } catch (error: any) {
+    return { success: false, error: { code: "FETCH_FAILED", message: error?.message || "Failed to fetch author analytics" } };
+  }
+}

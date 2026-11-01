@@ -18,10 +18,12 @@ import {
   ArrowLeft,
   Lock,
   Building,
+  BarChart3,
 } from "lucide-react";
 
 const NAV_ITEMS = [
   { label: "Overview", href: "/admin", icon: LayoutDashboard },
+  { label: "Platform Analytics", href: "/admin/analytics", icon: BarChart3 },
   { label: "Users", href: "/admin/users", icon: Users },
   { label: "Authors", href: "/admin/authors", icon: FileText },
   { label: "Articles", href: "/admin/articles", icon: BookOpen },

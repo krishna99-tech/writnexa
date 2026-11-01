@@ -21,6 +21,7 @@ import {
   ArticleCommentsSection,
 } from "@/components/article-interactions";
 import { FollowButton } from "@/components/follow-button";
+import { AnalyticsTracker } from "@/components/analytics-tracker";
 
 export const revalidate = 30;
 
@@ -92,6 +93,7 @@ export default async function ArticleDetailPage({
 
   return (
     <article className="container max-w-3xl mx-auto px-4 py-12 space-y-10">
+      <AnalyticsTracker eventType="article_view" articleId={article.id} />
       {/* Back Navigation */}
       <div>
         <Link

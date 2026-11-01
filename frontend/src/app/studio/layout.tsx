@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   FileText,
   PenSquare,
+  BarChart3,
   User,
   Settings,
   ArrowUpRight,
@@ -53,6 +54,12 @@ export default function StudioLayout({
       label: "Articles",
       icon: FileText,
       active: pathname === "/studio/articles" || (pathname.startsWith("/studio/articles") && pathname !== "/studio/articles/new"),
+    },
+    {
+      href: "/studio/analytics",
+      label: "Analytics",
+      icon: BarChart3,
+      active: pathname === "/studio/analytics",
     },
     {
       href: "/studio/articles/new",
