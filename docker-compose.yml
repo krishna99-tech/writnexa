@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: quorix-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${DB_USER:-quorix}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-quorix_dev_secret}
+      POSTGRES_DB: ${DB_NAME:-quorix_db}
+    ports:
+      - "${DB_PORT:-5432}:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-quorix} -d ${DB_NAME:-quorix_db}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: quorix-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: quorix-mailpit
+    restart: unless-stopped
+    ports:
+      - "1025:1025" # SMTP port
+      - "8025:8025" # Web UI
+    environment:
+      MP_MAX_MESSAGES: 500
+      MP_DATABASE: ""
+
+volumes:
+  postgres_data:
+  redis_data:
