@@ -94,6 +94,9 @@ export interface AuthorSummary {
 }
 
 export interface AuthorDetail extends AuthorSummary {
+  cover_image_url?: string | null;
+  reputation_score?: number;
+  reputation_tier?: string;
   github_url?: string | null;
   twitter_url?: string | null;
   linkedin_url?: string | null;
@@ -117,6 +120,7 @@ export interface UpdateProfileInput {
   headline?: string;
   bio?: string;
   avatar_url?: string;
+  cover_image_url?: string;
   github_url?: string;
   twitter_url?: string;
   linkedin_url?: string;
@@ -872,6 +876,43 @@ export async function fetchBookmarks(
     return {
       success: false,
       error: { code: "BOOKMARKS_FAILED", message: error?.message || "Failed to fetch bookmarks" },
+    };
+  }
+}
+
+export async function subscribeNewsletter(
+  email: string,
+  source: string = "global_footer"
+): Promise<ApiResponse<{ message: string; subscribed: boolean }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/newsletter/subscribe`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, source }),
+    });
+    return await res.json();
+  } catch (error: any) {
+    return {
+      success: false,
+      error: { code: "SUBSCRIBE_FAILED", message: error?.message || "Could not reach subscription service." },
+    };
+  }
+}
+
+export async function unsubscribeNewsletter(
+  email: string
+): Promise<ApiResponse<{ message: string; subscribed: boolean }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/newsletter/unsubscribe`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+    return await res.json();
+  } catch (error: any) {
+    return {
+      success: false,
+      error: { code: "UNSUBSCRIBE_FAILED", message: error?.message || "Could not reach subscription service." },
     };
   }
 }

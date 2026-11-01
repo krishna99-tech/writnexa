@@ -7,11 +7,14 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/lib/auth-context";
 import { API_BASE_URL, ApiResponse } from "@/lib/api";
 import { Terminal, AlertCircle, CheckCircle2, ArrowRight } from "lucide-react";
+import { AuthSplitLayout } from "@/components/auth-split-layout";
 
 export default function RegisterPage() {
   const router = useRouter();
+  const { user, isLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -20,6 +23,12 @@ export default function RegisterPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [registeredDevToken, setRegisteredDevToken] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (!isLoading && user) {
+      router.push(user.role === "admin" || user.role === "super_admin" ? "/admin" : "/dashboard");
+    }
+  }, [isLoading, user, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -71,7 +80,17 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="container max-w-lg mx-auto py-16 px-4">
+    <AuthSplitLayout
+      pageType="register"
+      title="Join the Developer Ecosystem"
+      description="Create your QUORIX developer account to publish architecture essays, curate reading lists, bookmark algorithms, and engage in high-signal technical discussions."
+      badge="Developer Community"
+      quote={{
+        text: "Sharing our multi-region replication postmortem on QUORIX connected us with leading distributed systems engineers.",
+        author: "Devon Zhang",
+        role: "Principal Architect",
+      }}
+    >
       <Card className="border-zinc-800 bg-zinc-900/40 backdrop-blur shadow-2xl">
         <CardHeader className="space-y-1">
           <div className="flex items-center gap-2 text-emerald-400 font-mono text-xs">
@@ -199,7 +218,7 @@ export default function RegisterPage() {
           </form>
         )}
       </Card>
-    </div>
+    </AuthSplitLayout>
   );
 }
 

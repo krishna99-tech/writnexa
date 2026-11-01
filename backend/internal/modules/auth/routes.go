@@ -30,6 +30,7 @@ func RegisterRoutes(r *gin.RouterGroup, h *Handler, cfg *config.Config) {
 		protected.Use(middleware.Authenticate(cfg.JWT.AccessSecret))
 		{
 			protected.GET("/me", h.GetMe)
+			protected.POST("/become-author", h.BecomeAuthor)
 			protected.POST("/change-password", h.ChangePassword)
 			protected.GET("/sessions", h.ListSessions)
 			protected.DELETE("/sessions/:id", h.RevokeSession)

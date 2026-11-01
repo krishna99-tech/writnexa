@@ -89,7 +89,7 @@ func (s *service) SearchArticles(ctx context.Context, query, categorySlug, tagSl
 		total = int64(len(rows))
 	}
 
-	var articles []content.ArticleSummary
+	articles := make([]content.ArticleSummary, 0)
 	for _, r := range rows {
 		var subtitle, cover, avatar, headline *string
 		if r.Subtitle.Valid {
@@ -174,7 +174,7 @@ func (s *service) SearchAuthors(ctx context.Context, query string, page, perPage
 		total = int64(len(rows))
 	}
 
-	var authors []content.AuthorSummary
+	authors := make([]content.AuthorSummary, 0)
 	for _, r := range rows {
 		var avatar, headline, bio *string
 		if r.AvatarUrl.Valid {
@@ -223,7 +223,7 @@ func (s *service) ListPopularArticles(ctx context.Context, limit int) ([]content
 		return nil, err
 	}
 
-	var articles []content.ArticleSummary
+	articles := make([]content.ArticleSummary, 0)
 	for _, r := range rows {
 		var subtitle, cover, avatar *string
 		if r.Subtitle.Valid {
@@ -308,6 +308,13 @@ func (s *service) GlobalSearch(ctx context.Context, query, searchType, categoryS
 		}
 		result.Authors = authors
 		result.AuthorsTotal = total
+	}
+
+	if result.Articles == nil {
+		result.Articles = make([]content.ArticleSummary, 0)
+	}
+	if result.Authors == nil {
+		result.Authors = make([]content.AuthorSummary, 0)
 	}
 
 	return result, nil

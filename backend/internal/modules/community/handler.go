@@ -403,6 +403,45 @@ func (h *Handler) GetUnreadCount(c *gin.Context) {
 	})
 }
 
+type NewsletterRequest struct {
+	Email  string `json:"email" binding:"required,email"`
+	Source string `json:"source"`
+}
+
+// SubscribeNewsletter handles POST /api/v1/newsletter/subscribe
+func (h *Handler) SubscribeNewsletter(c *gin.Context) {
+	var req NewsletterRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, http.StatusBadRequest, "INVALID_EMAIL", "Please provide a valid email address")
+		return
+	}
+
+	result, err := h.svc.SubscribeNewsletter(c.Request.Context(), req.Email, req.Source)
+	if err != nil {
+		response.Error(c, http.StatusBadRequest, "SUBSCRIPTION_FAILED", err.Error())
+		return
+	}
+
+	response.JSON(c, http.StatusOK, result)
+}
+
+// UnsubscribeNewsletter handles POST /api/v1/newsletter/unsubscribe
+func (h *Handler) UnsubscribeNewsletter(c *gin.Context) {
+	var req NewsletterRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, http.StatusBadRequest, "INVALID_EMAIL", "Please provide a valid email address")
+		return
+	}
+
+	result, err := h.svc.UnsubscribeNewsletter(c.Request.Context(), req.Email)
+	if err != nil {
+		response.Error(c, http.StatusBadRequest, "UNSUBSCRIBE_FAILED", err.Error())
+		return
+	}
+
+	response.JSON(c, http.StatusOK, result)
+}
+
 func getContextUserID(c *gin.Context) (uuid.UUID, bool) {
 	val, exists := c.Get(middleware.ContextUserID)
 	if !exists {

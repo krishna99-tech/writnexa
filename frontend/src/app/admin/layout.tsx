@@ -33,6 +33,7 @@ const NAV_ITEMS = [
   { label: "Articles", href: "/admin/articles", icon: BookOpen },
   { label: "Publications", href: "/admin/publications", icon: Building },
   { label: "Moderation Queue", href: "/admin/moderation", icon: AlertTriangle },
+  { label: "Reports", href: "/admin/reports", icon: AlertTriangle },
   { label: "Audit Trail", href: "/admin/audit-logs", icon: History },
   { label: "Platform Settings", href: "/admin/settings", icon: Settings },
 ];
@@ -42,10 +43,23 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const router = useRouter();
   const { user, profile, isLoading } = useAuth();
 
+  // Role authorization:
+  // - Admin and Super Admin have access to the entire admin center.
+  // - Moderators only have access to moderation queue and reports.
+  // - Authors and regular users are denied access.
+  const isModerator = user?.role === "moderator";
+  const isModAllowedRoute =
+    pathname.startsWith("/admin/moderation") ||
+    pathname.startsWith("/admin/reports");
+
   const isAuthorized =
     user?.role === "admin" ||
     user?.role === "super_admin" ||
-    user?.role === "moderator";
+    (isModerator && isModAllowedRoute);
+
+  const visibleNavItems = isModerator
+    ? NAV_ITEMS.filter((item) => item.href === "/admin/moderation" || item.href === "/admin/reports")
+    : NAV_ITEMS;
 
   useEffect(() => {
     if (!isLoading && !user) {
@@ -116,7 +130,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         {/* Sidebar Navigation */}
         <nav className="space-y-1">
-          {NAV_ITEMS.map((item) => {
+          {visibleNavItems.map((item) => {
             const Icon = item.icon;
             const active =
               pathname === item.href ||

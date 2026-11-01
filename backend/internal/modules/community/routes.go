@@ -12,6 +12,13 @@ func RegisterRoutes(r *gin.RouterGroup, h *Handler, cfg *config.Config) {
 	// Uses :slug wildcard matching content.RegisterRoutes to avoid Gin radix tree conflict
 	r.GET("/articles/:slug/comments", h.ListComments)
 
+	// Public Newsletter Subscription Endpoints
+	newsletter := r.Group("/newsletter")
+	{
+		newsletter.POST("/subscribe", h.SubscribeNewsletter)
+		newsletter.POST("/unsubscribe", h.UnsubscribeNewsletter)
+	}
+
 	// Protected Community Endpoints
 	authMW := middleware.Authenticate(cfg.JWT.AccessSecret)
 

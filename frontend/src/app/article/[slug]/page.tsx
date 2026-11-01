@@ -23,6 +23,7 @@ import {
 import { FollowButton } from "@/components/follow-button";
 import { AnalyticsTracker } from "@/components/analytics-tracker";
 import { AdPlacement } from "@/components/ad-placement";
+import { MarkdownRenderer } from "@/components/markdown-editor";
 
 export const revalidate = 30;
 
@@ -200,11 +201,9 @@ export default async function ArticleDetailPage({
       </header>
 
       {/* Main Technical Article Body */}
-      <section className="prose prose-invert prose-emerald max-w-none font-sans text-zinc-300 leading-relaxed space-y-6 text-base">
+      <section className="max-w-none font-sans leading-relaxed text-base">
         {article.content ? (
-          <div className="space-y-4 whitespace-pre-line leading-relaxed font-sans text-zinc-200 text-base">
-            {article.content}
-          </div>
+          <MarkdownRenderer content={article.content} />
         ) : (
           <p className="text-zinc-500 font-mono text-sm">
             Content is being rendered...

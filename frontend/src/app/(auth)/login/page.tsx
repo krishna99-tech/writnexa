@@ -10,17 +10,36 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth-context";
 import { API_BASE_URL, ApiResponse } from "@/lib/api";
 import { Terminal, AlertCircle, ArrowRight } from "lucide-react";
+import { AuthSplitLayout } from "@/components/auth-split-layout";
 
 function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const returnTo = searchParams.get("return_to") || "/";
+  const rawReturnTo = searchParams.get("return_to");
 
-  const { setSession } = useAuth();
+  // Validate return URLs to prevent open redirect vulnerabilities
+  const safeReturnTo = rawReturnTo && rawReturnTo.startsWith("/") && !rawReturnTo.startsWith("//") && !rawReturnTo.startsWith("/\\")
+    ? rawReturnTo
+    : null;
+
+  const { user, setSession, isLoading } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // If already authenticated, redirect to destination immediately without forcing re-login
+  React.useEffect(() => {
+    if (!isLoading && user) {
+      const destination =
+        safeReturnTo && safeReturnTo !== "/"
+          ? safeReturnTo
+          : user.role === "admin" || user.role === "super_admin"
+          ? "/admin"
+          : "/dashboard";
+      router.push(destination);
+    }
+  }, [isLoading, user, safeReturnTo, router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -50,11 +69,11 @@ function LoginForm() {
       setSession(data.data.access_token, data.data.user, data.data.profile);
       
       const destination =
-        returnTo !== "/"
-          ? returnTo
+        safeReturnTo && safeReturnTo !== "/"
+          ? safeReturnTo
           : data.data.user.role === "admin" || data.data.user.role === "super_admin"
           ? "/admin"
-          : "/";
+          : "/dashboard";
 
       router.push(destination);
     } catch (err: any) {
@@ -150,11 +169,21 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="container max-w-md mx-auto py-16 px-4">
-      <Suspense fallback={<div className="text-center font-mono text-zinc-500">Loading form...</div>}>
+    <AuthSplitLayout
+      pageType="login"
+      title="Welcome Back to QUORIX"
+      description="Access your author drafts, personalized feed, and engineering bookmarks across distributed architecture, systems programming, and performance engineering."
+      badge="Developer Workspace"
+      quote={{
+        text: "QUORIX is the only developer platform that treats systems engineering and distributed consensus as first-class citizens.",
+        author: "Alex Rivera",
+        role: "Staff Infrastructure Engineer",
+      }}
+    >
+      <Suspense fallback={<div className="text-center font-mono text-zinc-500">Loading authentication form...</div>}>
         <LoginForm />
       </Suspense>
-    </div>
+    </AuthSplitLayout>
   );
 }
 

@@ -363,6 +363,55 @@ func (h *Handler) GetMe(c *gin.Context) {
 	})
 }
 
+type BecomeAuthorRequest struct {
+	DisplayName string `json:"display_name"`
+	Headline    string `json:"headline"`
+	Bio         string `json:"bio"`
+	GithubURL   string `json:"github_url"`
+}
+
+func (h *Handler) BecomeAuthor(c *gin.Context) {
+	userID, ok := middleware.GetAuthenticatedUserID(c)
+	if !ok {
+		response.Error(c, http.StatusUnauthorized, "UNAUTHORIZED", "Authentication required.")
+		return
+	}
+
+	var req BecomeAuthorRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.BadRequest(c, "Invalid request payload.", response.FieldError{
+			Field: "body",
+			Issue: err.Error(),
+		})
+		return
+	}
+
+	res, err := h.svc.BecomeAuthor(c.Request.Context(), userID, req.DisplayName, req.Headline, req.Bio, req.GithubURL)
+	if err != nil {
+		if errors.Is(err, ErrAccountSuspended) {
+			response.Error(c, http.StatusForbidden, "ACCOUNT_SUSPENDED", err.Error())
+			return
+		}
+		response.InternalServerError(c, err.Error())
+		return
+	}
+
+	response.JSON(c, http.StatusOK, gin.H{
+		"message":      "Author status activated successfully! Welcome to QUORIX Studio.",
+		"access_token": res.AccessToken,
+		"user": gin.H{
+			"id":     toUUID(res.User.ID).String(),
+			"email":  res.User.Email,
+			"role":   res.User.Role,
+			"status": res.User.Status,
+		},
+		"profile": gin.H{
+			"username":     res.Profile.Username,
+			"display_name": res.Profile.DisplayName,
+		},
+	})
+}
+
 func (h *Handler) ListSessions(c *gin.Context) {
 	userID, ok := middleware.GetAuthenticatedUserID(c)
 	if !ok {

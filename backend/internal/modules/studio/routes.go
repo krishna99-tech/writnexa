@@ -7,10 +7,10 @@ import (
 )
 
 // RegisterRoutes registers all author studio endpoints.
-// All studio actions require authentication.
+// All studio actions require authentication and at least author role.
 func RegisterRoutes(r *gin.RouterGroup, h *Handler, cfg *config.Config) {
 	studio := r.Group("/studio")
-	studio.Use(middleware.Authenticate(cfg.JWT.AccessSecret))
+	studio.Use(middleware.Authenticate(cfg.JWT.AccessSecret), middleware.RequireRole("author"))
 	{
 		studio.GET("/overview", h.GetOverview)
 		studio.POST("/articles", h.CreateArticle)

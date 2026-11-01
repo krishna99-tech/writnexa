@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/mail"
 	"strings"
 	"time"
 
@@ -110,6 +111,9 @@ type Service interface {
 	MarkNotificationAsRead(ctx context.Context, userID uuid.UUID, notificationID uuid.UUID) error
 	MarkAllNotificationsAsRead(ctx context.Context, userID uuid.UUID) error
 	GetUnreadCount(ctx context.Context, userID uuid.UUID) (int64, error)
+
+	SubscribeNewsletter(ctx context.Context, email, source string) (*NewsletterResult, error)
+	UnsubscribeNewsletter(ctx context.Context, email string) (*NewsletterResult, error)
 }
 
 type service struct {
@@ -873,3 +877,83 @@ func (s *service) GetUnreadCount(ctx context.Context, userID uuid.UUID) (int64, 
 
 	return s.q.CountUnreadNotifications(ctx, pgtype.UUID{Bytes: userID, Valid: true})
 }
+
+// ==========================================
+// NEWSLETTER SUBSCRIPTION
+// ==========================================
+
+type NewsletterResult struct {
+	Message    string `json:"message"`
+	Subscribed bool   `json:"subscribed"`
+}
+
+func (s *service) SubscribeNewsletter(ctx context.Context, emailAddr, source string) (*NewsletterResult, error) {
+	cleanEmail := strings.ToLower(strings.TrimSpace(emailAddr))
+	if _, err := mail.ParseAddress(cleanEmail); err != nil {
+		return nil, errors.New("invalid email address format")
+	}
+
+	if source == "" {
+		source = "global_footer"
+	}
+
+	var status string
+	err := s.db.Pool.QueryRow(ctx, `SELECT status FROM newsletter_subscriptions WHERE lower(email) = lower($1)`, cleanEmail).Scan(&status)
+	if err == nil {
+		if status == "active" {
+			return &NewsletterResult{
+				Message:    "You are already subscribed to the QUORIX architectural digest.",
+				Subscribed: true,
+			}, nil
+		}
+		// Reactivate
+		_, err = s.db.Pool.Exec(ctx, `UPDATE newsletter_subscriptions SET status = 'active', updated_at = NOW() WHERE lower(email) = lower($1)`, cleanEmail)
+		if err != nil {
+			return nil, err
+		}
+		return &NewsletterResult{
+			Message:    "Welcome back! Your newsletter subscription has been reactivated.",
+			Subscribed: true,
+		}, nil
+	}
+
+	// Insert fresh subscription
+	_, err = s.db.Pool.Exec(ctx, `
+		INSERT INTO newsletter_subscriptions (email, status, source)
+		VALUES ($1, 'active', $2)
+	`, cleanEmail, source)
+	if err != nil {
+		return nil, err
+	}
+
+	return &NewsletterResult{
+		Message:    "Successfully subscribed! Check your inbox for the weekly architecture digest.",
+		Subscribed: true,
+	}, nil
+}
+
+func (s *service) UnsubscribeNewsletter(ctx context.Context, emailAddr string) (*NewsletterResult, error) {
+	cleanEmail := strings.ToLower(strings.TrimSpace(emailAddr))
+	if _, err := mail.ParseAddress(cleanEmail); err != nil {
+		return nil, errors.New("invalid email address format")
+	}
+
+	res, err := s.db.Pool.Exec(ctx, `
+		UPDATE newsletter_subscriptions
+		SET status = 'unsubscribed', updated_at = NOW()
+		WHERE lower(email) = lower($1)
+	`, cleanEmail)
+	if err != nil {
+		return nil, err
+	}
+
+	if res.RowsAffected() == 0 {
+		return nil, errors.New("email address was not found in active subscribers")
+	}
+
+	return &NewsletterResult{
+		Message:    "You have been successfully unsubscribed from the newsletter.",
+		Subscribed: false,
+	}, nil
+}
+

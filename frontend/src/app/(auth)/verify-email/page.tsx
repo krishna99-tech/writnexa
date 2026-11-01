@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { API_BASE_URL, ApiResponse } from "@/lib/api";
 import { Terminal, CheckCircle2, AlertCircle, RefreshCw, ArrowRight } from "lucide-react";
+import { AuthSplitLayout } from "@/components/auth-split-layout";
 
 function VerifyEmailContent() {
   const searchParams = useSearchParams();
@@ -199,11 +200,21 @@ function VerifyEmailContent() {
 
 export default function VerifyEmailPage() {
   return (
-    <div className="container max-w-md mx-auto py-16 px-4">
+    <AuthSplitLayout
+      pageType="verify-email"
+      title="Verify Your Developer Identity"
+      description="Confirm your email address to activate author studio publishing, participate in architecture discussions, and vote on community RFCs."
+      badge="Identity Handshake"
+      quote={{
+        text: "Verifying developer identities maintains signal quality, blocks spam vectors, and protects genuine engineering discourse.",
+        author: "DevOps & Moderation",
+        role: "QUORIX Trust & Safety",
+      }}
+    >
       <Suspense fallback={<div className="text-center font-mono text-zinc-500">Loading verification...</div>}>
         <VerifyEmailContent />
       </Suspense>
-    </div>
+    </AuthSplitLayout>
   );
 }
 

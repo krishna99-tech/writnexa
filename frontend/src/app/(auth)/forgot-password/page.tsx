@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { API_BASE_URL, ApiResponse } from "@/lib/api";
 import { Terminal, AlertCircle, CheckCircle2, ArrowRight } from "lucide-react";
+import { AuthSplitLayout } from "@/components/auth-split-layout";
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
@@ -47,7 +48,17 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="container max-w-md mx-auto py-16 px-4">
+    <AuthSplitLayout
+      pageType="forgot-password"
+      title="Recover Your Credentials"
+      description="Enter your registered developer email address. We'll issue a cryptographically signed, single-use reset token valid for 15 minutes."
+      badge="Credential Recovery"
+      quote={{
+        text: "Zero-knowledge secret recovery with cryptographic nonces ensures our platform members are completely shielded from credential stuffing attacks.",
+        author: "Security Operations",
+        role: "QUORIX Core Team",
+      }}
+    >
       <Card className="border-zinc-800 bg-zinc-900/40 backdrop-blur shadow-2xl">
         <CardHeader className="space-y-1">
           <div className="flex items-center gap-2 text-emerald-400 font-mono text-xs">
@@ -131,7 +142,7 @@ export default function ForgotPasswordPage() {
           </form>
         )}
       </Card>
-    </div>
+    </AuthSplitLayout>
   );
 }
 

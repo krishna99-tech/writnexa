@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { fetchUnreadNotificationCount } from "@/lib/api";
 import {
@@ -15,12 +16,56 @@ import {
   Bookmark,
   Rss,
   Search,
+  LayoutDashboard,
+  ArrowRight,
 } from "lucide-react";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 
 export function Navbar() {
+  const pathname = usePathname();
   const { user, profile, logout, isLoading, accessToken } = useAuth();
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+
+  // 1. Hide public navbar on Workspace (/dashboard), Studio (/studio), Admin (/admin), and Settings (/settings)
+  if (
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/studio") ||
+    pathname.startsWith("/dashboard") ||
+    pathname.startsWith("/settings")
+  ) {
+    return null;
+  }
+
+  // 2. Auth pages use dedicated self-contained AuthSplitLayout (Login, Register, Forgot Password, etc.)
+  const isAuthPage =
+    pathname === "/login" ||
+    pathname === "/register" ||
+    pathname === "/forgot-password" ||
+    pathname === "/reset-password" ||
+    pathname === "/verify-email" ||
+    pathname.startsWith("/(auth)");
+
+  if (isAuthPage) {
+    return null;
+  }
+
+  return <PublicNavbar user={user} profile={profile} logout={logout} isLoading={isLoading} accessToken={accessToken} />;
+}
+
+function PublicNavbar({
+  user,
+  profile,
+  logout,
+  isLoading,
+  accessToken,
+}: {
+  user: any;
+  profile: any;
+  logout: () => void;
+  isLoading: boolean;
+  accessToken: string | null;
+}) {
   const [unreadCount, setUnreadCount] = useState<number>(0);
 
   useEffect(() => {
@@ -91,13 +136,15 @@ export function Navbar() {
             >
               <span>Authors</span>
             </Link>
-            <Link
-              href="/studio"
-              className="flex items-center gap-1.5 hover:text-zinc-100 transition-colors"
-            >
-              <PenTool className="w-4 h-4" />
-              <span>Author Studio</span>
-            </Link>
+            {user && (
+              <Link
+                href="/dashboard"
+                className="flex items-center gap-1.5 hover:text-zinc-100 transition-colors text-emerald-400 font-medium"
+              >
+                <LayoutDashboard className="w-4 h-4" />
+                <span>Workspace</span>
+              </Link>
+            )}
             {(user?.role === "admin" || user?.role === "super_admin") && (
               <Link
                 href="/admin"
@@ -179,7 +226,7 @@ export function Navbar() {
                 </Button>
               </Link>
 
-              <Link href="/settings">
+              <Link href="/dashboard/settings">
                 <Button
                   variant="outline"
                   size="sm"

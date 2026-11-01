@@ -52,14 +52,17 @@ export default async function SearchPage({
     fetchCategories(),
   ]);
 
-  const searchData = searchRes.data || {
+  const rawData = searchRes.data;
+  const articles = rawData?.articles || [];
+  const authors = rawData?.authors || [];
+  const searchData = {
     query: searchQuery,
     type: searchType,
-    articles: [],
-    authors: [],
-    articles_total: 0,
-    authors_total: 0,
-    meta: { page: 1, per_page: 10, total_pages: 1, articles_total: 0, authors_total: 0 },
+    articles,
+    authors,
+    articles_total: rawData?.articles_total || 0,
+    authors_total: rawData?.authors_total || 0,
+    meta: rawData?.meta || { page: 1, per_page: 10, total_pages: 1, articles_total: 0, authors_total: 0 },
   };
 
   const categories = categoriesRes.data?.categories || [];
@@ -237,14 +240,14 @@ export default async function SearchPage({
       </div>
 
       {/* Matching Authors Shelf (if 'all' or 'authors' type) */}
-      {(searchType === "all" || searchType === "authors") && searchData.authors.length > 0 && (
+      {(searchType === "all" || searchType === "authors") && authors.length > 0 && (
         <section className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="text-base font-bold text-zinc-200 flex items-center gap-2">
               <Users className="w-4 h-4 text-emerald-400" />
               <span>Matching Authors ({searchData.authors_total})</span>
             </h2>
-            {searchType === "all" && searchData.authors_total > searchData.authors.length && (
+            {searchType === "all" && searchData.authors_total > authors.length && (
               <Link
                 href={buildUrl({ type: "authors" })}
                 className="text-xs font-mono text-emerald-400 hover:underline"
@@ -254,7 +257,7 @@ export default async function SearchPage({
             )}
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            {searchData.authors.map((a) => (
+            {authors.map((a) => (
               <AuthorCard key={a.user_id} author={a} />
             ))}
           </div>
@@ -274,7 +277,7 @@ export default async function SearchPage({
             </span>
           </div>
 
-          {searchData.articles.length === 0 ? (
+          {articles.length === 0 ? (
             <div className="text-center py-16 rounded-xl border border-dashed border-zinc-800 text-zinc-500 space-y-3">
               <Terminal className="w-8 h-8 mx-auto opacity-40" />
               <p className="text-sm font-sans">
@@ -286,7 +289,7 @@ export default async function SearchPage({
             </div>
           ) : (
             <div className="grid grid-cols-1 gap-4">
-              {searchData.articles.map((art) => (
+              {articles.map((art) => (
                 <ArticleCard key={art.id} article={art} />
               ))}
             </div>

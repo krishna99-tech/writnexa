@@ -14,27 +14,34 @@ func TestRBAC_Hierarchy(t *testing.T) {
 
 	tests := []struct {
 		name         string
+		setRole      bool
 		userRole     string
 		requiredRole string
 		expectedCode int
 	}{
-		{"User accessing user route", "user", "user", http.StatusOK},
-		{"User accessing author route", "user", "author", http.StatusForbidden},
-		{"Author accessing author route", "author", "author", http.StatusOK},
-		{"Author accessing admin route", "author", "admin", http.StatusForbidden},
-		{"Admin accessing author route", "admin", "author", http.StatusOK},
-		{"Admin accessing admin route", "admin", "admin", http.StatusOK},
-		{"Admin accessing super_admin route", "admin", "super_admin", http.StatusForbidden},
-		{"Super admin accessing everything", "super_admin", "admin", http.StatusOK},
+		{"Guest (unauthenticated) accessing protected route", false, "", "user", http.StatusUnauthorized},
+		{"Guest (unauthenticated) accessing author route", false, "", "author", http.StatusUnauthorized},
+		{"Guest (unauthenticated) accessing admin route", false, "", "admin", http.StatusUnauthorized},
+		{"User accessing user route", true, "user", "user", http.StatusOK},
+		{"User accessing author route", true, "user", "author", http.StatusForbidden},
+		{"Author accessing author route", true, "author", "author", http.StatusOK},
+		{"Author accessing admin route", true, "author", "admin", http.StatusForbidden},
+		{"Moderator accessing author route", true, "moderator", "author", http.StatusOK},
+		{"Admin accessing author route", true, "admin", "author", http.StatusOK},
+		{"Admin accessing admin route", true, "admin", "admin", http.StatusOK},
+		{"Admin accessing super_admin route", true, "admin", "super_admin", http.StatusForbidden},
+		{"Super admin accessing everything", true, "super_admin", "admin", http.StatusOK},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			r := gin.New()
-			r.Use(func(c *gin.Context) {
-				c.Set(ContextRole, tt.userRole)
-				c.Next()
-			})
+			if tt.setRole {
+				r.Use(func(c *gin.Context) {
+					c.Set(ContextRole, tt.userRole)
+					c.Next()
+				})
+			}
 			r.GET("/protected", RequireRole(tt.requiredRole), func(c *gin.Context) {
 				c.JSON(http.StatusOK, gin.H{"status": "ok"})
 			})

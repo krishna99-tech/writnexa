@@ -44,6 +44,7 @@ type Service interface {
 	ResetPassword(ctx context.Context, rawToken, newPassword string) error
 	ChangePassword(ctx context.Context, userID uuid.UUID, currentPassword, newPassword string) error
 	GetMe(ctx context.Context, userID uuid.UUID) (*UserWithProfile, error)
+	BecomeAuthor(ctx context.Context, userID uuid.UUID, displayName, headline, bio, githubURL string) (*AuthSessionResult, error)
 	ListSessions(ctx context.Context, userID uuid.UUID) ([]db.UserSession, error)
 	RevokeSession(ctx context.Context, userID, sessionID uuid.UUID) error
 	SetEmailEnqueuer(enqueuer EmailEnqueuer)
@@ -638,3 +639,67 @@ func (s *service) RevokeSession(ctx context.Context, userID, sessionID uuid.UUID
 
 	return s.q.RevokeSession(ctx, pgSessionID)
 }
+
+func (s *service) BecomeAuthor(ctx context.Context, userID uuid.UUID, displayName, headline, bio, githubURL string) (*AuthSessionResult, error) {
+	if s.q == nil {
+		return nil, errors.New("database not available")
+	}
+
+	pgID := fromUUID(userID)
+	user, err := s.q.GetUserByID(ctx, pgID)
+	if err != nil {
+		return nil, ErrUserNotFound
+	}
+
+	if user.Status == "suspended" || user.Status == "deactivated" {
+		return nil, ErrAccountSuspended
+	}
+
+	// Upgrade role to author if current role is user
+	// If already author, moderator, admin, or super_admin, do not downgrade
+	if user.Role == "user" {
+		if _, err := s.db.Pool.Exec(ctx, `UPDATE users SET role = 'author', updated_at = NOW() WHERE id = $1`, userID); err != nil {
+			return nil, fmt.Errorf("failed to upgrade role: %w", err)
+		}
+		user.Role = "author"
+	}
+
+	// Update author profile fields if provided
+	if displayName != "" || headline != "" || bio != "" || githubURL != "" {
+		if _, err := s.db.Pool.Exec(ctx, `
+			UPDATE profiles
+			SET display_name = COALESCE(NULLIF($2, ''), display_name),
+			    headline = COALESCE(NULLIF($3, ''), headline),
+			    bio = COALESCE(NULLIF($4, ''), bio),
+			    github_url = COALESCE(NULLIF($5, ''), github_url),
+			    updated_at = NOW()
+			WHERE user_id = $1
+		`, userID, displayName, headline, bio, githubURL); err != nil {
+			return nil, fmt.Errorf("failed to update profile: %w", err)
+		}
+	}
+
+	profile, err := s.q.GetProfileByUserID(ctx, pgID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Generate fresh access token with updated role
+	newAccessToken, err := security.GenerateAccessToken(
+		userID,
+		user.Email,
+		user.Role,
+		s.cfg.JWT.AccessSecret,
+		s.cfg.JWT.AccessTTL,
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to generate access token: %w", err)
+	}
+
+	return &AuthSessionResult{
+		AccessToken: newAccessToken,
+		User:        user,
+		Profile:     profile,
+	}, nil
+}
+

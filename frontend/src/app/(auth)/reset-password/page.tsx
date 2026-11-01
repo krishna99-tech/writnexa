@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { API_BASE_URL, ApiResponse } from "@/lib/api";
 import { Terminal, AlertCircle, CheckCircle2, ArrowRight } from "lucide-react";
+import { AuthSplitLayout } from "@/components/auth-split-layout";
 
 function ResetPasswordForm() {
   const router = useRouter();
@@ -169,11 +170,21 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
   return (
-    <div className="container max-w-md mx-auto py-16 px-4">
+    <AuthSplitLayout
+      pageType="reset-password"
+      title="Set New Master Password"
+      description="Update your QUORIX developer account password. Your new secret will be hardened with Argon2id memory-hard key derivation to withstand GPU brute-forcing."
+      badge="Argon2id Hardening"
+      quote={{
+        text: "Our cryptographic password pipeline enforces 64MB memory cost with parallelism across multi-threaded CPU instructions.",
+        author: "Cryptographic Engineering",
+        role: "QUORIX Core Security",
+      }}
+    >
       <Suspense fallback={<div className="text-center font-mono text-zinc-500">Loading form...</div>}>
         <ResetPasswordForm />
       </Suspense>
-    </div>
+    </AuthSplitLayout>
   );
 }
 
