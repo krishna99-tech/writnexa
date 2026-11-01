@@ -83,6 +83,16 @@ export function Navbar() {
                 </Badge>
               </div>
 
+              <Link href="/studio/articles/new">
+                <Button
+                  size="sm"
+                  className="h-8 bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-semibold gap-1.5 font-mono text-xs shadow-sm"
+                >
+                  <PenTool className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">Write</span>
+                </Button>
+              </Link>
+
               <Link href="/settings">
                 <Button
                   variant="outline"

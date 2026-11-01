@@ -21,6 +21,7 @@ import (
 	"github.com/quorix/quorix-backend/internal/modules/auth"
 	"github.com/quorix/quorix-backend/internal/modules/content"
 	"github.com/quorix/quorix-backend/internal/modules/email"
+	"github.com/quorix/quorix-backend/internal/modules/studio"
 	"github.com/quorix/quorix-backend/internal/redis"
 	"github.com/quorix/quorix-backend/internal/response"
 )
@@ -113,6 +114,10 @@ func main() {
 	contentSvc := content.NewService(db, queries)
 	contentHandler := content.NewHandler(contentSvc)
 
+	// Author Studio Module
+	studioSvc := studio.NewService(db, queries)
+	studioHandler := studio.NewHandler(studioSvc)
+
 	// Root health endpoints
 	router.GET("/health", healthHandler.Check)
 
@@ -128,6 +133,7 @@ func main() {
 		})
 
 		content.RegisterRoutes(v1, contentHandler, cfg)
+		studio.RegisterRoutes(v1, studioHandler, cfg)
 		email.RegisterRoutes(v1, emailHandler, cfg)
 		auth.RegisterRoutes(v1, authHandler, cfg)
 	}

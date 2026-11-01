@@ -31,6 +31,7 @@ export interface CategoryRef {
 }
 
 export interface TagRef {
+  id?: string;
   name: string;
   slug: string;
 }
@@ -118,6 +119,66 @@ export interface UpdateProfileInput {
   linkedin_url?: string;
   website_url?: string;
   location?: string;
+}
+
+export interface StudioArticleSummary {
+  id: string;
+  title: string;
+  slug: string;
+  subtitle?: string | null;
+  cover_image_url?: string | null;
+  status: "draft" | "published" | "archived";
+  reading_time_minutes: number;
+  views_count: number;
+  likes_count: number;
+  bookmarks_count: number;
+  comments_count: number;
+  published_at?: string | null;
+  created_at: string;
+  updated_at: string;
+  category_name?: string | null;
+  category_slug?: string | null;
+  tags?: TagRef[];
+}
+
+export interface StudioArticleDetail extends StudioArticleSummary {
+  content: string;
+  content_html: string;
+  category_id?: string | null;
+  canonical_url?: string | null;
+}
+
+export interface StudioOverview {
+  total_articles: number;
+  published_count: number;
+  draft_count: number;
+  archived_count: number;
+  total_views: number;
+  total_likes: number;
+  total_comments: number;
+  total_bookmarks: number;
+}
+
+export interface CreateStudioArticleInput {
+  title: string;
+  slug?: string;
+  subtitle?: string;
+  content: string;
+  cover_image_url?: string;
+  category_id?: string;
+  tags?: string[];
+  status?: "draft" | "published" | "archived";
+}
+
+export interface UpdateStudioArticleInput {
+  title?: string;
+  slug?: string;
+  subtitle?: string;
+  content?: string;
+  cover_image_url?: string;
+  category_id?: string;
+  tags?: string[];
+  status?: "draft" | "published" | "archived";
 }
 
 export interface HealthCheckData {
@@ -381,6 +442,174 @@ export async function updateAuthorProfile(
     return {
       success: false,
       error: { code: "UPDATE_FAILED", message: error?.message || "Failed to update profile" },
+    };
+  }
+}
+
+// ==========================================
+// AUTHOR STUDIO API
+// ==========================================
+
+export async function fetchStudioOverview(token: string): Promise<ApiResponse<{ overview: StudioOverview }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/studio/overview`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    return await res.json();
+  } catch (error: any) {
+    return {
+      success: false,
+      error: { code: "FETCH_FAILED", message: error?.message || "Failed to load studio overview" },
+    };
+  }
+}
+
+export async function fetchStudioArticles(
+  token: string,
+  params: { status?: string; search?: string; page?: number; perPage?: number } = {}
+): Promise<ApiResponse<{ articles: StudioArticleSummary[] }>> {
+  try {
+    const status = params.status || "all";
+    const q = encodeURIComponent(params.search || "");
+    const page = params.page || 1;
+    const perPage = params.perPage || 15;
+
+    const res = await fetch(
+      `${API_BASE_URL}/api/v1/studio/articles?status=${status}&q=${q}&page=${page}&per_page=${perPage}`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        cache: "no-store",
+      }
+    );
+    return await res.json();
+  } catch (error: any) {
+    return {
+      success: false,
+      error: { code: "FETCH_FAILED", message: error?.message || "Failed to load studio articles" },
+    };
+  }
+}
+
+export async function fetchStudioArticle(
+  token: string,
+  id: string
+): Promise<ApiResponse<{ article: StudioArticleDetail }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/studio/articles/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    return await res.json();
+  } catch (error: any) {
+    return {
+      success: false,
+      error: { code: "FETCH_FAILED", message: error?.message || "Failed to load article" },
+    };
+  }
+}
+
+export async function createStudioArticle(
+  token: string,
+  data: CreateStudioArticleInput
+): Promise<ApiResponse<{ article: StudioArticleDetail }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/studio/articles`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+    return await res.json();
+  } catch (error: any) {
+    return {
+      success: false,
+      error: { code: "CREATE_FAILED", message: error?.message || "Failed to create article" },
+    };
+  }
+}
+
+export async function updateStudioArticle(
+  token: string,
+  id: string,
+  data: UpdateStudioArticleInput
+): Promise<ApiResponse<{ article: StudioArticleDetail }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/studio/articles/${id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(data),
+    });
+    return await res.json();
+  } catch (error: any) {
+    return {
+      success: false,
+      error: { code: "UPDATE_FAILED", message: error?.message || "Failed to update article" },
+    };
+  }
+}
+
+export async function publishStudioArticle(
+  token: string,
+  id: string
+): Promise<ApiResponse<{ article: StudioArticleDetail }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/studio/articles/${id}/publish`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return await res.json();
+  } catch (error: any) {
+    return {
+      success: false,
+      error: { code: "PUBLISH_FAILED", message: error?.message || "Failed to publish article" },
+    };
+  }
+}
+
+export async function archiveStudioArticle(
+  token: string,
+  id: string
+): Promise<ApiResponse<{ article: StudioArticleDetail }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/studio/articles/${id}/archive`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return await res.json();
+  } catch (error: any) {
+    return {
+      success: false,
+      error: { code: "ARCHIVE_FAILED", message: error?.message || "Failed to archive article" },
+    };
+  }
+}
+
+export async function deleteStudioArticle(
+  token: string,
+  id: string
+): Promise<ApiResponse<{ message: string }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/studio/articles/${id}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return await res.json();
+  } catch (error: any) {
+    return {
+      success: false,
+      error: { code: "DELETE_FAILED", message: error?.message || "Failed to delete article" },
     };
   }
 }

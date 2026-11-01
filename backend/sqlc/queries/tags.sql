@@ -18,6 +18,17 @@ SELECT * FROM tags
 WHERE slug = $1
 LIMIT 1;
 
+-- name: UpsertTag :one
+INSERT INTO tags (
+    name,
+    slug
+) VALUES (
+    $1, $2
+)
+ON CONFLICT (slug) DO UPDATE
+SET updated_at = NOW()
+RETURNING *;
+
 -- name: IncrementTagUsage :exec
 UPDATE tags
 SET

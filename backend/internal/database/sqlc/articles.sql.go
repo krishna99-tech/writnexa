@@ -27,6 +27,39 @@ func (q *Queries) AddArticleTag(ctx context.Context, arg AddArticleTagParams) er
 	return err
 }
 
+const checkArticleSlugExists = `-- name: CheckArticleSlugExists :one
+SELECT EXISTS (
+    SELECT 1 FROM articles
+    WHERE LOWER(slug) = LOWER($1) AND deleted_at IS NULL
+)
+`
+
+func (q *Queries) CheckArticleSlugExists(ctx context.Context, lower string) (bool, error) {
+	row := q.db.QueryRow(ctx, checkArticleSlugExists, lower)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
+const checkArticleSlugExistsExceptID = `-- name: CheckArticleSlugExistsExceptID :one
+SELECT EXISTS (
+    SELECT 1 FROM articles
+    WHERE LOWER(slug) = LOWER($1) AND id != $2 AND deleted_at IS NULL
+)
+`
+
+type CheckArticleSlugExistsExceptIDParams struct {
+	Lower string      `json:"lower"`
+	ID    pgtype.UUID `json:"id"`
+}
+
+func (q *Queries) CheckArticleSlugExistsExceptID(ctx context.Context, arg CheckArticleSlugExistsExceptIDParams) (bool, error) {
+	row := q.db.QueryRow(ctx, checkArticleSlugExistsExceptID, arg.Lower, arg.ID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const countArticlesByAuthor = `-- name: CountArticlesByAuthor :one
 SELECT COUNT(*) FROM articles a
 JOIN profiles p ON a.author_id = p.user_id
@@ -87,6 +120,28 @@ WHERE a.status = 'published' AND a.deleted_at IS NULL
 
 func (q *Queries) CountSearchPublishedArticles(ctx context.Context, plaintoTsquery string) (int64, error) {
 	row := q.db.QueryRow(ctx, countSearchPublishedArticles, plaintoTsquery)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const countStudioArticles = `-- name: CountStudioArticles :one
+SELECT COUNT(*)
+FROM articles a
+WHERE a.author_id = $1 
+  AND a.deleted_at IS NULL
+  AND ($2::text = 'all' OR a.status = $2::text)
+  AND ($3::text = '' OR a.title ILIKE '%' || $3::text || '%')
+`
+
+type CountStudioArticlesParams struct {
+	AuthorID pgtype.UUID `json:"author_id"`
+	Status   string      `json:"status"`
+	Search   string      `json:"search"`
+}
+
+func (q *Queries) CountStudioArticles(ctx context.Context, arg CountStudioArticlesParams) (int64, error) {
+	row := q.db.QueryRow(ctx, countStudioArticles, arg.AuthorID, arg.Status, arg.Search)
 	var count int64
 	err := row.Scan(&count)
 	return count, err
@@ -172,6 +227,24 @@ func (q *Queries) CreateArticle(ctx context.Context, arg CreateArticleParams) (A
 		&i.DeletedAt,
 	)
 	return i, err
+}
+
+const deleteStudioArticle = `-- name: DeleteStudioArticle :exec
+UPDATE articles
+SET 
+    deleted_at = NOW(),
+    updated_at = NOW()
+WHERE id = $1 AND author_id = $2 AND deleted_at IS NULL
+`
+
+type DeleteStudioArticleParams struct {
+	ID       pgtype.UUID `json:"id"`
+	AuthorID pgtype.UUID `json:"author_id"`
+}
+
+func (q *Queries) DeleteStudioArticle(ctx context.Context, arg DeleteStudioArticleParams) error {
+	_, err := q.db.Exec(ctx, deleteStudioArticle, arg.ID, arg.AuthorID)
+	return err
 }
 
 const getArticleByID = `-- name: GetArticleByID :one
@@ -355,6 +428,124 @@ func (q *Queries) GetAuthorArticleStats(ctx context.Context, lower string) (GetA
 	var i GetAuthorArticleStatsRow
 	err := row.Scan(
 		&i.TotalArticles,
+		&i.TotalViews,
+		&i.TotalLikes,
+		&i.TotalComments,
+		&i.TotalBookmarks,
+	)
+	return i, err
+}
+
+const getStudioArticleByID = `-- name: GetStudioArticleByID :one
+SELECT 
+    a.id, a.author_id, a.publication_id, a.category_id, a.title, a.slug, a.subtitle, a.content, a.content_html, a.cover_image_url, a.canonical_url, a.status, a.reading_time_minutes, a.views_count, a.likes_count, a.bookmarks_count, a.comments_count, a.featured, a.search_vector, a.published_at, a.created_at, a.updated_at, a.deleted_at,
+    c.name as category_name,
+    c.slug as category_slug
+FROM articles a
+LEFT JOIN categories c ON a.category_id = c.id
+WHERE a.id = $1 AND a.author_id = $2 AND a.deleted_at IS NULL
+LIMIT 1
+`
+
+type GetStudioArticleByIDParams struct {
+	ID       pgtype.UUID `json:"id"`
+	AuthorID pgtype.UUID `json:"author_id"`
+}
+
+type GetStudioArticleByIDRow struct {
+	ID                 pgtype.UUID        `json:"id"`
+	AuthorID           pgtype.UUID        `json:"author_id"`
+	PublicationID      pgtype.UUID        `json:"publication_id"`
+	CategoryID         pgtype.UUID        `json:"category_id"`
+	Title              string             `json:"title"`
+	Slug               string             `json:"slug"`
+	Subtitle           pgtype.Text        `json:"subtitle"`
+	Content            string             `json:"content"`
+	ContentHtml        string             `json:"content_html"`
+	CoverImageUrl      pgtype.Text        `json:"cover_image_url"`
+	CanonicalUrl       pgtype.Text        `json:"canonical_url"`
+	Status             string             `json:"status"`
+	ReadingTimeMinutes int32              `json:"reading_time_minutes"`
+	ViewsCount         int32              `json:"views_count"`
+	LikesCount         int32              `json:"likes_count"`
+	BookmarksCount     int32              `json:"bookmarks_count"`
+	CommentsCount      int32              `json:"comments_count"`
+	Featured           bool               `json:"featured"`
+	SearchVector       interface{}        `json:"search_vector"`
+	PublishedAt        pgtype.Timestamptz `json:"published_at"`
+	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+	DeletedAt          pgtype.Timestamptz `json:"deleted_at"`
+	CategoryName       pgtype.Text        `json:"category_name"`
+	CategorySlug       pgtype.Text        `json:"category_slug"`
+}
+
+func (q *Queries) GetStudioArticleByID(ctx context.Context, arg GetStudioArticleByIDParams) (GetStudioArticleByIDRow, error) {
+	row := q.db.QueryRow(ctx, getStudioArticleByID, arg.ID, arg.AuthorID)
+	var i GetStudioArticleByIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.AuthorID,
+		&i.PublicationID,
+		&i.CategoryID,
+		&i.Title,
+		&i.Slug,
+		&i.Subtitle,
+		&i.Content,
+		&i.ContentHtml,
+		&i.CoverImageUrl,
+		&i.CanonicalUrl,
+		&i.Status,
+		&i.ReadingTimeMinutes,
+		&i.ViewsCount,
+		&i.LikesCount,
+		&i.BookmarksCount,
+		&i.CommentsCount,
+		&i.Featured,
+		&i.SearchVector,
+		&i.PublishedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+		&i.CategoryName,
+		&i.CategorySlug,
+	)
+	return i, err
+}
+
+const getStudioOverview = `-- name: GetStudioOverview :one
+SELECT 
+    COUNT(*)::bigint as total_articles,
+    COUNT(*) FILTER (WHERE status = 'published')::bigint as published_count,
+    COUNT(*) FILTER (WHERE status = 'draft')::bigint as draft_count,
+    COUNT(*) FILTER (WHERE status = 'archived')::bigint as archived_count,
+    COALESCE(SUM(views_count), 0)::bigint as total_views,
+    COALESCE(SUM(likes_count), 0)::bigint as total_likes,
+    COALESCE(SUM(comments_count), 0)::bigint as total_comments,
+    COALESCE(SUM(bookmarks_count), 0)::bigint as total_bookmarks
+FROM articles
+WHERE author_id = $1 AND deleted_at IS NULL
+`
+
+type GetStudioOverviewRow struct {
+	TotalArticles  int64 `json:"total_articles"`
+	PublishedCount int64 `json:"published_count"`
+	DraftCount     int64 `json:"draft_count"`
+	ArchivedCount  int64 `json:"archived_count"`
+	TotalViews     int64 `json:"total_views"`
+	TotalLikes     int64 `json:"total_likes"`
+	TotalComments  int64 `json:"total_comments"`
+	TotalBookmarks int64 `json:"total_bookmarks"`
+}
+
+func (q *Queries) GetStudioOverview(ctx context.Context, authorID pgtype.UUID) (GetStudioOverviewRow, error) {
+	row := q.db.QueryRow(ctx, getStudioOverview, authorID)
+	var i GetStudioOverviewRow
+	err := row.Scan(
+		&i.TotalArticles,
+		&i.PublishedCount,
+		&i.DraftCount,
+		&i.ArchivedCount,
 		&i.TotalViews,
 		&i.TotalLikes,
 		&i.TotalComments,
@@ -842,6 +1033,109 @@ func (q *Queries) ListPublishedArticles(ctx context.Context, arg ListPublishedAr
 	return items, nil
 }
 
+const listStudioArticles = `-- name: ListStudioArticles :many
+SELECT 
+    a.id, a.author_id, a.publication_id, a.category_id, a.title, a.slug, a.subtitle, a.content, a.content_html, a.cover_image_url, a.canonical_url, a.status, a.reading_time_minutes, a.views_count, a.likes_count, a.bookmarks_count, a.comments_count, a.featured, a.search_vector, a.published_at, a.created_at, a.updated_at, a.deleted_at,
+    c.name as category_name,
+    c.slug as category_slug
+FROM articles a
+LEFT JOIN categories c ON a.category_id = c.id
+WHERE a.author_id = $1 
+  AND a.deleted_at IS NULL
+  AND ($2::text = 'all' OR a.status = $2::text)
+  AND ($3::text = '' OR a.title ILIKE '%' || $3::text || '%')
+ORDER BY a.updated_at DESC
+LIMIT $5 OFFSET $4
+`
+
+type ListStudioArticlesParams struct {
+	AuthorID  pgtype.UUID `json:"author_id"`
+	Status    string      `json:"status"`
+	Search    string      `json:"search"`
+	OffsetVal int32       `json:"offset_val"`
+	LimitVal  int32       `json:"limit_val"`
+}
+
+type ListStudioArticlesRow struct {
+	ID                 pgtype.UUID        `json:"id"`
+	AuthorID           pgtype.UUID        `json:"author_id"`
+	PublicationID      pgtype.UUID        `json:"publication_id"`
+	CategoryID         pgtype.UUID        `json:"category_id"`
+	Title              string             `json:"title"`
+	Slug               string             `json:"slug"`
+	Subtitle           pgtype.Text        `json:"subtitle"`
+	Content            string             `json:"content"`
+	ContentHtml        string             `json:"content_html"`
+	CoverImageUrl      pgtype.Text        `json:"cover_image_url"`
+	CanonicalUrl       pgtype.Text        `json:"canonical_url"`
+	Status             string             `json:"status"`
+	ReadingTimeMinutes int32              `json:"reading_time_minutes"`
+	ViewsCount         int32              `json:"views_count"`
+	LikesCount         int32              `json:"likes_count"`
+	BookmarksCount     int32              `json:"bookmarks_count"`
+	CommentsCount      int32              `json:"comments_count"`
+	Featured           bool               `json:"featured"`
+	SearchVector       interface{}        `json:"search_vector"`
+	PublishedAt        pgtype.Timestamptz `json:"published_at"`
+	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+	DeletedAt          pgtype.Timestamptz `json:"deleted_at"`
+	CategoryName       pgtype.Text        `json:"category_name"`
+	CategorySlug       pgtype.Text        `json:"category_slug"`
+}
+
+func (q *Queries) ListStudioArticles(ctx context.Context, arg ListStudioArticlesParams) ([]ListStudioArticlesRow, error) {
+	rows, err := q.db.Query(ctx, listStudioArticles,
+		arg.AuthorID,
+		arg.Status,
+		arg.Search,
+		arg.OffsetVal,
+		arg.LimitVal,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []ListStudioArticlesRow{}
+	for rows.Next() {
+		var i ListStudioArticlesRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.AuthorID,
+			&i.PublicationID,
+			&i.CategoryID,
+			&i.Title,
+			&i.Slug,
+			&i.Subtitle,
+			&i.Content,
+			&i.ContentHtml,
+			&i.CoverImageUrl,
+			&i.CanonicalUrl,
+			&i.Status,
+			&i.ReadingTimeMinutes,
+			&i.ViewsCount,
+			&i.LikesCount,
+			&i.BookmarksCount,
+			&i.CommentsCount,
+			&i.Featured,
+			&i.SearchVector,
+			&i.PublishedAt,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.DeletedAt,
+			&i.CategoryName,
+			&i.CategorySlug,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const listTrendingArticles = `-- name: ListTrendingArticles :many
 SELECT 
     a.id, a.author_id, a.category_id, a.title, a.slug, a.subtitle, a.cover_image_url,
@@ -1080,6 +1374,56 @@ func (q *Queries) UpdateArticle(ctx context.Context, arg UpdateArticleParams) (A
 		arg.Status,
 		arg.ReadingTimeMinutes,
 	)
+	var i Article
+	err := row.Scan(
+		&i.ID,
+		&i.AuthorID,
+		&i.PublicationID,
+		&i.CategoryID,
+		&i.Title,
+		&i.Slug,
+		&i.Subtitle,
+		&i.Content,
+		&i.ContentHtml,
+		&i.CoverImageUrl,
+		&i.CanonicalUrl,
+		&i.Status,
+		&i.ReadingTimeMinutes,
+		&i.ViewsCount,
+		&i.LikesCount,
+		&i.BookmarksCount,
+		&i.CommentsCount,
+		&i.Featured,
+		&i.SearchVector,
+		&i.PublishedAt,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const updateArticleStatus = `-- name: UpdateArticleStatus :one
+UPDATE articles
+SET
+    status = $1::varchar,
+    published_at = CASE 
+        WHEN $1::varchar = 'published' AND published_at IS NULL THEN NOW() 
+        ELSE published_at 
+    END,
+    updated_at = NOW()
+WHERE id = $2 AND author_id = $3 AND deleted_at IS NULL
+RETURNING id, author_id, publication_id, category_id, title, slug, subtitle, content, content_html, cover_image_url, canonical_url, status, reading_time_minutes, views_count, likes_count, bookmarks_count, comments_count, featured, search_vector, published_at, created_at, updated_at, deleted_at
+`
+
+type UpdateArticleStatusParams struct {
+	Status   string      `json:"status"`
+	ID       pgtype.UUID `json:"id"`
+	AuthorID pgtype.UUID `json:"author_id"`
+}
+
+func (q *Queries) UpdateArticleStatus(ctx context.Context, arg UpdateArticleStatusParams) (Article, error) {
+	row := q.db.QueryRow(ctx, updateArticleStatus, arg.Status, arg.ID, arg.AuthorID)
 	var i Article
 	err := row.Scan(
 		&i.ID,

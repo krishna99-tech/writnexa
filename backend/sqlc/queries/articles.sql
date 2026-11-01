@@ -235,3 +235,80 @@ FROM articles a
 JOIN profiles p ON a.author_id = p.user_id
 WHERE LOWER(p.username) = LOWER($1) AND a.status = 'published' AND a.deleted_at IS NULL;
 
+-- name: ListStudioArticles :many
+SELECT 
+    a.*,
+    c.name as category_name,
+    c.slug as category_slug
+FROM articles a
+LEFT JOIN categories c ON a.category_id = c.id
+WHERE a.author_id = @author_id 
+  AND a.deleted_at IS NULL
+  AND (@status::text = 'all' OR a.status = @status::text)
+  AND (@search::text = '' OR a.title ILIKE '%' || @search::text || '%')
+ORDER BY a.updated_at DESC
+LIMIT @limit_val OFFSET @offset_val;
+
+-- name: CountStudioArticles :one
+SELECT COUNT(*)
+FROM articles a
+WHERE a.author_id = @author_id 
+  AND a.deleted_at IS NULL
+  AND (@status::text = 'all' OR a.status = @status::text)
+  AND (@search::text = '' OR a.title ILIKE '%' || @search::text || '%');
+
+-- name: GetStudioArticleByID :one
+SELECT 
+    a.*,
+    c.name as category_name,
+    c.slug as category_slug
+FROM articles a
+LEFT JOIN categories c ON a.category_id = c.id
+WHERE a.id = $1 AND a.author_id = $2 AND a.deleted_at IS NULL
+LIMIT 1;
+
+-- name: CheckArticleSlugExistsExceptID :one
+SELECT EXISTS (
+    SELECT 1 FROM articles
+    WHERE LOWER(slug) = LOWER($1) AND id != $2 AND deleted_at IS NULL
+);
+
+-- name: CheckArticleSlugExists :one
+SELECT EXISTS (
+    SELECT 1 FROM articles
+    WHERE LOWER(slug) = LOWER($1) AND deleted_at IS NULL
+);
+
+-- name: GetStudioOverview :one
+SELECT 
+    COUNT(*)::bigint as total_articles,
+    COUNT(*) FILTER (WHERE status = 'published')::bigint as published_count,
+    COUNT(*) FILTER (WHERE status = 'draft')::bigint as draft_count,
+    COUNT(*) FILTER (WHERE status = 'archived')::bigint as archived_count,
+    COALESCE(SUM(views_count), 0)::bigint as total_views,
+    COALESCE(SUM(likes_count), 0)::bigint as total_likes,
+    COALESCE(SUM(comments_count), 0)::bigint as total_comments,
+    COALESCE(SUM(bookmarks_count), 0)::bigint as total_bookmarks
+FROM articles
+WHERE author_id = $1 AND deleted_at IS NULL;
+
+-- name: UpdateArticleStatus :one
+UPDATE articles
+SET
+    status = @status::varchar,
+    published_at = CASE 
+        WHEN @status::varchar = 'published' AND published_at IS NULL THEN NOW() 
+        ELSE published_at 
+    END,
+    updated_at = NOW()
+WHERE id = @id AND author_id = @author_id AND deleted_at IS NULL
+RETURNING *;
+
+-- name: DeleteStudioArticle :exec
+UPDATE articles
+SET 
+    deleted_at = NOW(),
+    updated_at = NOW()
+WHERE id = $1 AND author_id = $2 AND deleted_at IS NULL;
+
+

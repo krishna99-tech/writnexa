@@ -120,3 +120,35 @@ func (q *Queries) ListTags(ctx context.Context, arg ListTagsParams) ([]Tag, erro
 	}
 	return items, nil
 }
+
+const upsertTag = `-- name: UpsertTag :one
+INSERT INTO tags (
+    name,
+    slug
+) VALUES (
+    $1, $2
+)
+ON CONFLICT (slug) DO UPDATE
+SET updated_at = NOW()
+RETURNING id, name, slug, description, usage_count, created_at, updated_at
+`
+
+type UpsertTagParams struct {
+	Name string `json:"name"`
+	Slug string `json:"slug"`
+}
+
+func (q *Queries) UpsertTag(ctx context.Context, arg UpsertTagParams) (Tag, error) {
+	row := q.db.QueryRow(ctx, upsertTag, arg.Name, arg.Slug)
+	var i Tag
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Slug,
+		&i.Description,
+		&i.UsageCount,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
