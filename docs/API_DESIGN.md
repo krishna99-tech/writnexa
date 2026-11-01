@@ -154,3 +154,4 @@ Every JSON payload returned by QUORIX conforms to a predictable, strictly typed 
 | `GET` | `/api/v1/admin/audit-logs` | Admin | Read-only administrative audit log feed |
 | `GET` | `/api/v1/admin/settings` | Admin | Read platform configuration keys |
 | `PUT` | `/api/v1/admin/settings` | Super Admin | Update platform configuration keys |
+

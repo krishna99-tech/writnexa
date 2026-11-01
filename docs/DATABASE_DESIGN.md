@@ -490,3 +490,4 @@ CREATE TABLE platform_settings (
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 ```
+

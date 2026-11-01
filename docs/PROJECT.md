@@ -95,3 +95,4 @@ Unlike generic blogging or CMS platforms, QUORIX is purpose-built to handle comp
 | **Media Storage** | AWS S3 / Compatible Object Storage | Direct presigned uploads for author images; public CDN distribution; local fallback in dev. |
 | **Email Delivery** | Amazon SES via AWS SDK for Go v2 | Transactional outbox table pattern with asynchronous worker, retry backoff, and Mailpit local capture. |
 | **Infrastructure** | Docker, Docker Compose, Nginx | Predictable containerized development, production multi-stage builds, edge reverse proxy. |
+

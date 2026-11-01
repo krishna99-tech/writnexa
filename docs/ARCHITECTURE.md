@@ -213,7 +213,7 @@ backend/
 
 - **Password Hashing**: **Argon2id** (memory: 64 MB, iterations: 3, parallelism: 4, salt: 16 bytes, key length: 32 bytes).
 - **Access Tokens**: Short-lived JWT (HMAC-SHA256, 15-minute lifespan). Payload includes `sub` (UserID), `role`, `email`, `exp`, `iat`.
-- **Refresh Tokens**: Cryptographically secure 256-bit random entropy (base64url). 
+- **Refresh Tokens**: Cryptographically secure 256-bit random entropy (base64url).
   - Token is stored **only as a SHA-256 hash** in `user_sessions`.
   - Sent to the client strictly inside an **HTTP-only, Secure, SameSite=Strict** cookie (`__Host-quorix-rt`).
   - Refresh token rotation: Every refresh request invalidates the used token and issues a new rotating token. If a revoked token is replayed, the entire session family is revoked immediately (theft detection).
@@ -226,20 +226,20 @@ Hierarchical roles are enforced at the backend middleware layer:
 super_admin > admin > moderator > author > user
 ```
 
-| Action | Guest | User | Author | Moderator | Admin | Super Admin |
-|---|:---:|:---:|:---:|:---:|:---:|:---:|
-| Read public articles & search | Yes | Yes | Yes | Yes | Yes | Yes |
-| View author profiles | Yes | Yes | Yes | Yes | Yes | Yes |
-| Like, Bookmark, Follow | No | Yes | Yes | Yes | Yes | Yes |
-| Post Comments / Replies | No | Yes | Yes | Yes | Yes | Yes |
-| Create & Save Drafts | No | Yes* | Yes | Yes | Yes | Yes |
-| Publish Articles | No | Yes* | Yes | Yes | Yes | Yes |
-| Edit / Delete Own Articles | No | Yes | Yes | Yes | Yes | Yes |
-| Edit Any Article / Unpublish | No | No | No | Yes | Yes | Yes |
-| Manage User Bans / Reports | No | No | No | Yes | Yes | Yes |
-| Manage Advertisements | No | No | No | No | Yes | Yes |
-| View System Health & Email Ops | No | No | No | No | Yes | Yes |
-| Promote Users to Admin / Settings | No | No | No | No | No | Yes |
+| Action                            | Guest | User | Author | Moderator | Admin | Super Admin |
+| --------------------------------- | :---: | :--: | :----: | :-------: | :---: | :---------: |
+| Read public articles & search     |  Yes  | Yes |  Yes  |    Yes    |  Yes  |     Yes     |
+| View author profiles              |  Yes  | Yes |  Yes  |    Yes    |  Yes  |     Yes     |
+| Like, Bookmark, Follow            |  No  | Yes |  Yes  |    Yes    |  Yes  |     Yes     |
+| Post Comments / Replies           |  No  | Yes |  Yes  |    Yes    |  Yes  |     Yes     |
+| Create & Save Drafts              |  No  | Yes* |  Yes  |    Yes    |  Yes  |     Yes     |
+| Publish Articles                  |  No  | Yes* |  Yes  |    Yes    |  Yes  |     Yes     |
+| Edit / Delete Own Articles        |  No  | Yes |  Yes  |    Yes    |  Yes  |     Yes     |
+| Edit Any Article / Unpublish      |  No  |  No  |   No   |    Yes    |  Yes  |     Yes     |
+| Manage User Bans / Reports        |  No  |  No  |   No   |    Yes    |  Yes  |     Yes     |
+| Manage Advertisements             |  No  |  No  |   No   |    No    |  Yes  |     Yes     |
+| View System Health & Email Ops    |  No  |  No  |   No   |    No    |  Yes  |     Yes     |
+| Promote Users to Admin / Settings |  No  |  No  |   No   |    No    |  No  |     Yes     |
 
 *\*Any authenticated user can publish; publishing automatically elevates/activates author profile capabilities.*
 
@@ -251,7 +251,7 @@ sequenceDiagram
     actor Guest as Guest Reader
     participant Browser as Next.js Client
     participant Backend as Go Backend
-    
+  
     Guest->>Browser: Reads article /article/go-concurrency
     Guest->>Browser: Clicks "Like" or "Bookmark"
     Browser->>Browser: Detects unauthenticated session
@@ -290,7 +290,7 @@ flowchart LR
         Dispatch{"Dispatch via AWS SES"}
         Success["UPDATE status='SENT'\nlog SES MessageID"]
         Failure["UPDATE status='FAILED'\nretry_count++ & backoff"]
-        
+      
         Poll --> Dispatch
         Dispatch -- Success --> Success
         Dispatch -- Failure --> Failure
@@ -324,7 +324,7 @@ flowchart TD
 
     subgraph Compute["Host / VPS / Cloud Compute"]
         NginxProxy["Nginx (Reverse Proxy & TLS Termination)\n• SSL (Let's Encrypt)\n• Rate Limiting (100 req/min/IP)\n• HTTP/2 & Gzip/Brotli Compression"]
-        
+      
         subgraph DockerNet["Docker Bridge Network"]
             GoApp["QUORIX Go Backend (Binary)\n• Listening on :8080\n• Slog telemetry\n• Outbox Worker"]
             RedisInst["Redis 7 Container\n• Listening on :6379\n• Append-Only Persistence"]
@@ -351,6 +351,7 @@ flowchart TD
 ```
 
 ### 6.1 Multi-Stage Go Dockerfile Pattern
+
 - Stage 1: `golang:1.26-alpine` compiles statically linked binary (`CGO_ENABLED=0 GOOS=linux`).
 - Stage 2: `scratch` or `alpine:3.20` contains only the static binary, CA certificates, and timezone data (~25 MB total image size).
 
@@ -359,21 +360,25 @@ flowchart TD
 ## 7. Architectural Decisions & Risk Management
 
 ### Decision 1: Modular Monolith vs. Microservices
+
 - **Decision**: Build as a modular monolith inside a single repository.
 - **Rationale**: QUORIX requires strict transactional consistency between articles, tags, authors, and email outbox. Microservices would introduce distributed transaction overhead, network latency, and operational complexity with no initial scaling benefit.
 - **Risk Mitigation**: Strict module package boundaries in Go prevent cyclic dependencies. Any module can be split into a standalone service in the future if required.
 
 ### Decision 2: PostgreSQL Full-Text Search vs. External Search Engine
+
 - **Decision**: Use PostgreSQL native `tsvector` and `tsquery` with GIN indexing for search.
 - **Rationale**: Avoids maintaining and synchronizing an external Elasticsearch/Opensearch cluster. PostgreSQL handles hundreds of thousands of articles with sub-10ms search queries using English stemming and ranking (`ts_rank`).
 - **Risk Mitigation**: The search interface in the article repository abstracts the search query. If search demands exceed PostgreSQL limits, an external engine can be plugged behind the exact same interface.
 
 ### Decision 3: sqlc + pgx vs. Heavy ORM (GORM)
+
 - **Decision**: Use `sqlc` to generate type-safe Go code from pure SQL queries, coupled with `pgxpool`.
 - **Rationale**: ORMs obscure generated SQL, perform suboptimal joins, and introduce reflection overhead. `sqlc` guarantees compile-time query verification, zero reflection, and raw SQL performance.
 - **Risk Mitigation**: Developers write standard SQL queries with full access to PostgreSQL-specific functions (e.g. `to_tsvector`, `json_agg`).
 
 ### Decision 4: Presigned S3 Uploads vs. Backend File Streaming
+
 - **Decision**: Author Studio client uploads images directly to AWS S3 via backend-generated presigned PUT URLs.
 - **Rationale**: Streaming large image payloads through the Go backend consumes memory and saturates backend network bandwidth. Presigned URLs allow direct client-to-S3 transfers with strict file size and MIME type restrictions.
 - **Risk Mitigation**: Presigned URLs expire in 5 minutes; backend validates user identity and enforces quotas before issuing upload URLs.
