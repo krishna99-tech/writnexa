@@ -1,5 +1,8 @@
 export const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+  typeof window !== "undefined"
+    ? ""
+    : (process.env.INTERNAL_API_URL ||
+       (process.env.NODE_ENV === "production" ? "http://backend:8080" : "http://localhost:8080"));
 
 export interface ApiResponse<T = any> {
   success: boolean;
