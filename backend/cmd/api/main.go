@@ -17,6 +17,7 @@ import (
 	"github.com/quorix/quorix-backend/internal/health"
 	"github.com/quorix/quorix-backend/internal/logger"
 	"github.com/quorix/quorix-backend/internal/middleware"
+	"github.com/quorix/quorix-backend/internal/modules/auth"
 	"github.com/quorix/quorix-backend/internal/redis"
 	"github.com/quorix/quorix-backend/internal/response"
 )
@@ -50,7 +51,7 @@ func main() {
 		)
 	} else {
 		defer db.Close()
-		// Try running migrations
+		// Auto-run migrations in development
 		migrationsDir := "migrations"
 		if _, err := os.Stat(migrationsDir); os.IsNotExist(err) {
 			migrationsDir = "../migrations"
@@ -98,6 +99,11 @@ func main() {
 				"time":    time.Now().UTC(),
 			})
 		})
+
+		// Authentication & Security Module
+		authSvc := auth.NewService(db, cfg)
+		authHandler := auth.NewHandler(authSvc, cfg)
+		auth.RegisterRoutes(v1, authHandler, cfg)
 	}
 
 	// 8. Server setup & Graceful shutdown

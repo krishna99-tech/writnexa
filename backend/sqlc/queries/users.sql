@@ -23,10 +23,24 @@ LIMIT 1;
 UPDATE users
 SET
     status = $2,
-    email_verified_at = CASE WHEN $2 = 'active' THEN COALESCE(email_verified_at, NOW()) ELSE email_verified_at END,
     updated_at = NOW()
 WHERE id = $1
 RETURNING *;
+
+-- name: SetUserEmailVerified :exec
+UPDATE users
+SET
+    email_verified_at = COALESCE(email_verified_at, NOW()),
+    status = 'active',
+    updated_at = NOW()
+WHERE id = $1;
+
+-- name: UpdateUserPassword :exec
+UPDATE users
+SET
+    password_hash = $2,
+    updated_at = NOW()
+WHERE id = $1;
 
 -- name: UpdateUserLastLogin :exec
 UPDATE users

@@ -15,6 +15,7 @@ type Config struct {
 	Database DatabaseConfig
 	Redis    RedisConfig
 	CORS     CORSConfig
+	JWT      JWTConfig
 }
 
 type AppConfig struct {
@@ -59,15 +60,26 @@ type CORSConfig struct {
 	AllowedHeaders []string
 }
 
+type JWTConfig struct {
+	AccessSecret  string
+	RefreshSecret string
+	AccessTTL     time.Duration
+	RefreshTTL    time.Duration
+	CookieName    string
+	CookieSecure  bool
+}
+
 // Load loads configuration from environment variables and an optional .env file.
 func Load() (*Config, error) {
 	// Try loading from .env in backend directory or root
 	_ = godotenv.Load(".env")
 	_ = godotenv.Load("../.env")
 
+	appEnv := getEnv("APP_ENV", "development")
+
 	cfg := &Config{
 		App: AppConfig{
-			Env:      getEnv("APP_ENV", "development"),
+			Env:      appEnv,
 			Port:     getEnvAsInt("APP_PORT", 8080),
 			URL:      getEnv("APP_URL", "http://localhost:8080"),
 			LogLevel: getEnv("LOG_LEVEL", "info"),
@@ -97,6 +109,14 @@ func Load() (*Config, error) {
 			}),
 			AllowedMethods: []string{"GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"},
 			AllowedHeaders: []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Request-ID"},
+		},
+		JWT: JWTConfig{
+			AccessSecret:  getEnv("JWT_ACCESS_SECRET", "development_access_secret_min_32_chars_long_quorix"),
+			RefreshSecret: getEnv("JWT_REFRESH_SECRET", "development_refresh_secret_min_32_chars_long_quorix"),
+			AccessTTL:     getEnvAsDuration("JWT_ACCESS_TTL", 15*time.Minute),
+			RefreshTTL:    getEnvAsDuration("JWT_REFRESH_TTL", 7*24*time.Hour),
+			CookieName:    getEnv("COOKIE_NAME", "quorix_rt"),
+			CookieSecure:  getEnvAsBool("COOKIE_SECURE", appEnv == "production"),
 		},
 	}
 

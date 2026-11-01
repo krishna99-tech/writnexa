@@ -56,6 +56,29 @@ func (q *Queries) CreateSession(ctx context.Context, arg CreateSessionParams) (U
 	return i, err
 }
 
+const getSessionByID = `-- name: GetSessionByID :one
+SELECT id, user_id, refresh_token_hash, user_agent, ip_address, expires_at, is_revoked, created_at, updated_at FROM user_sessions
+WHERE id = $1 AND is_revoked = FALSE
+LIMIT 1
+`
+
+func (q *Queries) GetSessionByID(ctx context.Context, id pgtype.UUID) (UserSession, error) {
+	row := q.db.QueryRow(ctx, getSessionByID, id)
+	var i UserSession
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.RefreshTokenHash,
+		&i.UserAgent,
+		&i.IpAddress,
+		&i.ExpiresAt,
+		&i.IsRevoked,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getSessionByTokenHash = `-- name: GetSessionByTokenHash :one
 SELECT id, user_id, refresh_token_hash, user_agent, ip_address, expires_at, is_revoked, created_at, updated_at FROM user_sessions
 WHERE refresh_token_hash = $1 AND is_revoked = FALSE AND expires_at > NOW()
@@ -77,6 +100,42 @@ func (q *Queries) GetSessionByTokenHash(ctx context.Context, refreshTokenHash st
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const listActiveSessionsByUserID = `-- name: ListActiveSessionsByUserID :many
+SELECT id, user_id, refresh_token_hash, user_agent, ip_address, expires_at, is_revoked, created_at, updated_at FROM user_sessions
+WHERE user_id = $1 AND is_revoked = FALSE AND expires_at > NOW()
+ORDER BY created_at DESC
+`
+
+func (q *Queries) ListActiveSessionsByUserID(ctx context.Context, userID pgtype.UUID) ([]UserSession, error) {
+	rows, err := q.db.Query(ctx, listActiveSessionsByUserID, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	items := []UserSession{}
+	for rows.Next() {
+		var i UserSession
+		if err := rows.Scan(
+			&i.ID,
+			&i.UserID,
+			&i.RefreshTokenHash,
+			&i.UserAgent,
+			&i.IpAddress,
+			&i.ExpiresAt,
+			&i.IsRevoked,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const revokeAllUserSessions = `-- name: RevokeAllUserSessions :exec

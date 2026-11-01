@@ -101,6 +101,20 @@ func (q *Queries) GetUserByID(ctx context.Context, id pgtype.UUID) (User, error)
 	return i, err
 }
 
+const setUserEmailVerified = `-- name: SetUserEmailVerified :exec
+UPDATE users
+SET
+    email_verified_at = COALESCE(email_verified_at, NOW()),
+    status = 'active',
+    updated_at = NOW()
+WHERE id = $1
+`
+
+func (q *Queries) SetUserEmailVerified(ctx context.Context, id pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, setUserEmailVerified, id)
+	return err
+}
+
 const softDeleteUser = `-- name: SoftDeleteUser :exec
 UPDATE users
 SET
@@ -128,11 +142,28 @@ func (q *Queries) UpdateUserLastLogin(ctx context.Context, id pgtype.UUID) error
 	return err
 }
 
+const updateUserPassword = `-- name: UpdateUserPassword :exec
+UPDATE users
+SET
+    password_hash = $2,
+    updated_at = NOW()
+WHERE id = $1
+`
+
+type UpdateUserPasswordParams struct {
+	ID           pgtype.UUID `json:"id"`
+	PasswordHash string      `json:"password_hash"`
+}
+
+func (q *Queries) UpdateUserPassword(ctx context.Context, arg UpdateUserPasswordParams) error {
+	_, err := q.db.Exec(ctx, updateUserPassword, arg.ID, arg.PasswordHash)
+	return err
+}
+
 const updateUserStatus = `-- name: UpdateUserStatus :one
 UPDATE users
 SET
     status = $2,
-    email_verified_at = CASE WHEN $2 = 'active' THEN COALESCE(email_verified_at, NOW()) ELSE email_verified_at END,
     updated_at = NOW()
 WHERE id = $1
 RETURNING id, email, password_hash, role, status, email_verified_at, last_login_at, created_at, updated_at, deleted_at

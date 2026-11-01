@@ -15,6 +15,16 @@ SELECT * FROM user_sessions
 WHERE refresh_token_hash = $1 AND is_revoked = FALSE AND expires_at > NOW()
 LIMIT 1;
 
+-- name: GetSessionByID :one
+SELECT * FROM user_sessions
+WHERE id = $1 AND is_revoked = FALSE
+LIMIT 1;
+
+-- name: ListActiveSessionsByUserID :many
+SELECT * FROM user_sessions
+WHERE user_id = $1 AND is_revoked = FALSE AND expires_at > NOW()
+ORDER BY created_at DESC;
+
 -- name: RevokeSession :exec
 UPDATE user_sessions
 SET
