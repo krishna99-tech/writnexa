@@ -1,18 +1,16 @@
-version: '3.8'
-
 services:
   postgres:
     image: postgres:16-alpine
     container_name: quorix-postgres-prod
     restart: always
     environment:
-      POSTGRES_USER: ${DB_USER}
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
-      POSTGRES_DB: ${DB_NAME:-quorix_db}
+      POSTGRES_USER: ${DB_USER:-quorix_admin}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-quorix_prod_secret}
+      POSTGRES_DB: ${DB_NAME:-quorix_prod}
     volumes:
       - postgres_prod_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME:-quorix_db}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-quorix_admin} -d ${DB_NAME:-quorix_prod}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -23,7 +21,7 @@ services:
     image: redis:7-alpine
     container_name: quorix-redis-prod
     restart: always
-    command: redis-server --appendonly yes --requirepass "${REDIS_PASSWORD:-}"
+    command: redis-server --appendonly yes --requirepass "${REDIS_PASSWORD:-quorix_redis_secret}"
     volumes:
       - redis_prod_data:/data
     healthcheck:
@@ -45,16 +43,16 @@ services:
       APP_PORT: 8080
       DB_HOST: postgres
       DB_PORT: 5432
-      DB_USER: ${DB_USER}
-      DB_PASSWORD: ${DB_PASSWORD}
-      DB_NAME: ${DB_NAME:-quorix_db}
+      DB_USER: ${DB_USER:-quorix_admin}
+      DB_PASSWORD: ${DB_PASSWORD:-quorix_prod_secret}
+      DB_NAME: ${DB_NAME:-quorix_prod}
       DB_SSLMODE: disable
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:-quorix_redis_secret}
       REDIS_ENABLED: "true"
-      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET}
-      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-d75c20422550d353390ab17aae39469170a3459e0ebce1842212d6c73efcd5c7}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-bdf45c54baae6252374298b20aedaa58ec9bcb949b808c28f890f0a6b676fe82}
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-https://quorix.io,https://www.quorix.io}
       AWS_REGION: ${AWS_REGION:-us-east-1}
       AWS_SES_FROM_EMAIL: ${AWS_SES_FROM_EMAIL:-notifications@quorix.io}
@@ -111,3 +109,4 @@ volumes:
   postgres_prod_data:
   redis_prod_data:
   certbot_data:
+
