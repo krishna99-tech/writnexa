@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
@@ -151,7 +151,7 @@ export function HomeView({
                 </Badge>
                 <span>&bull;</span>
                 <span className="text-zinc-500">
-                  Production Node: <strong className="text-zinc-300">quorix-cluster-01</strong>
+                  Production Node: <strong className="text-zinc-300">writnexa-cluster-01</strong>
                 </span>
               </div>
             </div>
@@ -164,10 +164,10 @@ export function HomeView({
                   <span>Write New Deep Dive</span>
                 </Button>
               </Link>
-              <Link href="/studio">
+              <Link href="/dashboard">
                 <Button variant="outline" className="border-zinc-700 bg-zinc-900 hover:bg-zinc-800 text-zinc-200 gap-2 font-mono text-xs">
                   <LayoutDashboard className="w-3.5 h-3.5 text-zinc-400" />
-                  <span>Author Studio</span>
+                  <span>Author Workspace</span>
                 </Button>
               </Link>
               <Link href="/settings?tab=network">
@@ -216,7 +216,7 @@ export function HomeView({
             </Link>
 
             <Link
-              href="/studio"
+              href="/dashboard/drafts"
               className="p-3 rounded-xl border border-zinc-800/80 bg-zinc-900/40 hover:bg-zinc-900 hover:border-zinc-700 transition-all group"
             >
               <span className="text-zinc-500 block text-[10px] uppercase">Your Studio Drafts</span>
@@ -599,7 +599,7 @@ export function HomeView({
         </div>
       </section>
 
-      {/* WHY QUORIX: Guest Value Proposition Grid */}
+      {/* WHY WRITNEXA: Guest Value Proposition Grid */}
       <section className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="p-6 rounded-xl border border-zinc-800 bg-zinc-900/30 space-y-3">
           <div className="w-10 h-10 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">

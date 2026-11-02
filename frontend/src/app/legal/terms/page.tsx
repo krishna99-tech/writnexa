@@ -1,9 +1,9 @@
-import React from "react";
+﻿import React from "react";
 import { Terminal } from "lucide-react";
 
 export const metadata = {
-  title: "Terms of Service — QUORIX",
-  description: "Terms and conditions governing access to the QUORIX developer publishing platform.",
+  title: "Terms of Service — WRITNEXA",
+  description: "Terms and conditions governing access to the WRITNEXA developer publishing platform.",
 };
 
 export default function TermsPage() {
@@ -26,14 +26,14 @@ export default function TermsPage() {
         <section className="space-y-2">
           <h2 className="text-base font-bold text-zinc-100">1. Acceptance of Terms</h2>
           <p>
-            By accessing or using the QUORIX platform, API, or services, you agree to be bound by these Terms of Service. If you do not agree, you must not access the platform.
+            By accessing or using the WRITNEXA platform, API, or services, you agree to be bound by these Terms of Service. If you do not agree, you must not access the platform.
           </p>
         </section>
 
         <section className="space-y-2">
           <h2 className="text-base font-bold text-zinc-100">2. Author Content Ownership</h2>
           <p>
-            You retain all copyright and intellectual property rights in the articles and code samples you publish on QUORIX. By publishing, you grant QUORIX a worldwide, non-exclusive license to host, display, and format your content for platform readers.
+            You retain all copyright and intellectual property rights in the articles and code samples you publish on WRITNEXA. By publishing, you grant WRITNEXA a worldwide, non-exclusive license to host, display, and format your content for platform readers.
           </p>
         </section>
 

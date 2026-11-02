@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, Suspense } from "react";
 import Link from "next/link";
@@ -87,7 +87,7 @@ function LoginForm() {
       <CardHeader className="space-y-1">
         <div className="flex items-center gap-2 text-emerald-400 font-mono text-xs">
           <Terminal className="w-4 h-4" />
-          <span>session_authenticate // quorix.io</span>
+          <span>session_authenticate // writnexa.dev</span>
         </div>
         <CardTitle className="text-2xl font-bold tracking-tight text-zinc-100">
           Sign In
@@ -111,7 +111,7 @@ function LoginForm() {
             <Input
               id="email"
               type="email"
-              placeholder="developer@quorix.io"
+              placeholder="developer@writnexa.dev"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -171,11 +171,11 @@ export default function LoginPage() {
   return (
     <AuthSplitLayout
       pageType="login"
-      title="Welcome Back to QUORIX"
+      title="Welcome Back to WRITNEXA"
       description="Access your author drafts, personalized feed, and engineering bookmarks across distributed architecture, systems programming, and performance engineering."
       badge="Developer Workspace"
       quote={{
-        text: "QUORIX is the only developer platform that treats systems engineering and distributed consensus as first-class citizens.",
+        text: "WRITNEXA is the only developer platform that treats systems engineering and distributed consensus as first-class citizens.",
         author: "Alex Rivera",
         role: "Staff Infrastructure Engineer",
       }}

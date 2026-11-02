@@ -1,10 +1,10 @@
-import type { MetadataRoute } from "next";
+﻿import type { MetadataRoute } from "next";
 import { fetchArticles, fetchCategories } from "@/lib/api";
 
 export const revalidate = 3600; // Cache sitemap for 1 hour
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://quorix.io";
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || "https://writnexa.dev";
 
   // Static core routes
   const staticRoutes: MetadataRoute.Sitemap = [

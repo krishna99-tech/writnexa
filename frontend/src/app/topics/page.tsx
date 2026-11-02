@@ -1,10 +1,33 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { fetchCategories } from "@/lib/api";
 import { Card, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Layers, Terminal, ArrowRight, Cpu, Database, Layout, Server, Shield } from "lucide-react";
+import {
+  Layers,
+  Terminal,
+  ArrowRight,
+  Cpu,
+  Database,
+  Layout,
+  Server,
+  Shield,
+  Activity,
+  Bot,
+  Network,
+  GitBranch,
+  TrendingUp,
+  Cloud,
+  Zap,
+} from "lucide-react";
 
 export const revalidate = 60;
+
+export const metadata: Metadata = {
+  title: "Core Engineering Topics & Taxonomy Directory | WRITNEXA",
+  description:
+    "Browse technical publishing categorized by specialization and architecture domains across distributed systems, systems programming, and cloud infrastructure.",
+};
 
 const iconMap: Record<string, any> = {
   terminal: Terminal,
@@ -13,6 +36,14 @@ const iconMap: Record<string, any> = {
   layout: Layout,
   server: Server,
   shield: Shield,
+  activity: Activity,
+  bot: Bot,
+  network: Network,
+  github: GitBranch,
+  "trending-up": TrendingUp,
+  cloud: Cloud,
+  layers: Layers,
+  zap: Zap,
 };
 
 export default async function TopicsPage() {
@@ -23,20 +54,25 @@ export default async function TopicsPage() {
     <div className="container max-w-5xl mx-auto px-4 py-12 space-y-8">
       {/* Header */}
       <div className="space-y-2">
-        <div className="flex items-center gap-2 text-emerald-400 font-mono text-xs">
-          <Layers className="w-4 h-4" />
-          <span>taxonomy_index // topic_directory</span>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2 text-emerald-400 font-mono text-xs">
+            <Layers className="w-4 h-4" />
+            <span>taxonomy_index // topic_directory</span>
+          </div>
+          <Badge variant="outline" className="font-mono text-xs border-zinc-800 text-zinc-400">
+            {categories.length} Topics Indexed
+          </Badge>
         </div>
-        <h1 className="text-3xl font-extrabold tracking-tight text-zinc-100">
+        <h1 className="text-3xl sm:text-4xl font-extrabold tracking-tight text-zinc-100">
           Core Engineering Topics
         </h1>
-        <p className="text-sm text-zinc-400 font-sans">
-          Browse technical publishing categorized by specialization and architecture domains.
+        <p className="text-sm sm:text-base text-zinc-400 font-sans max-w-2xl leading-relaxed">
+          Browse technical publishing categorized by specialization and architecture domains. Deep dives with zero superficial noise.
         </p>
       </div>
 
       {/* Topics Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
         {categories.map((cat) => {
           const IconComponent = (cat.icon_name && iconMap[cat.icon_name]) || Layers;
 

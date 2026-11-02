@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -157,7 +157,7 @@ export default function NewArticlePage() {
       <header className="sticky top-0 z-30 border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur-md px-4 sm:px-8 h-14 flex items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <Link
-            href="/studio/articles"
+            href="/dashboard/articles"
             className="flex items-center gap-1.5 text-xs font-mono text-zinc-400 hover:text-zinc-100 transition-colors p-1.5 rounded-lg hover:bg-zinc-900 border border-transparent hover:border-zinc-800"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
@@ -205,7 +205,8 @@ export default function NewArticlePage() {
             className="h-8 border-zinc-800 hover:bg-zinc-900 text-zinc-300 font-mono text-xs gap-1.5"
           >
             <Save className="w-3.5 h-3.5" />
-            <span>Save Draft</span>
+            <span className="hidden sm:inline">Save Draft</span>
+            <span className="sm:hidden">Save</span>
           </Button>
 
           <Button
@@ -451,7 +452,7 @@ export default function NewArticlePage() {
 
               <div className="relative">
                 <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-zinc-600 text-[11px] font-mono">
-                  quorix.io/article/
+                  writnexa.dev/article/
                 </span>
                 <Input
                   value={slug}
@@ -491,7 +492,7 @@ export default function NewArticlePage() {
               </span>
               <div className="space-y-1 pt-1">
                 <p className="text-[11px] font-mono text-emerald-500 truncate">
-                  https://quorix.io/article/{slug || "slug-preview"}
+                  https://writnexa.dev/article/{slug || "slug-preview"}
                 </p>
                 <h4 className="text-xs font-semibold text-sky-400 line-clamp-1">
                   {title || "Article Title..."}

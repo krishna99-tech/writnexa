@@ -2,6 +2,7 @@
 
 import { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { WritnexaLogo } from "@/components/writnexa-logo";
 
 function SettingsRedirectContent() {
   const router = useRouter();
@@ -22,9 +23,7 @@ function SettingsRedirectContent() {
 
   return (
     <div className="min-h-[60vh] flex flex-col items-center justify-center font-mono text-xs text-zinc-500 gap-2">
-      <div className="w-6 h-6 rounded bg-zinc-900 border border-zinc-700 flex items-center justify-center font-bold text-emerald-400 animate-pulse text-[10px]">
-        Q/
-      </div>
+      <WritnexaLogo variant="icon" size="sm" className="animate-pulse" />
       <span>Navigating to Workspace Settings...</span>
     </div>
   );

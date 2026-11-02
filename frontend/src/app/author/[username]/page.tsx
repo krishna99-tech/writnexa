@@ -21,6 +21,7 @@ import {
   Calendar,
 } from "lucide-react";
 import { FollowButton } from "@/components/follow-button";
+import { AuthorSponsorsList } from "@/components/author-sponsors-list";
 
 export const revalidate = 30;
 
@@ -32,25 +33,25 @@ export async function generateMetadata({
   const { username } = await params;
   const res = await fetchAuthor(username);
   if (!res.success || !res.data?.author) {
-    return { title: "Author Not Found | QUORIX" };
+    return { title: "Author Not Found | WRITNEXA" };
   }
 
   const author = res.data.author;
   const desc =
     author.headline ||
     author.bio ||
-    `Read software engineering and technical architecture articles by @${author.username} on QUORIX.`;
+    `Read software engineering and technical architecture articles by @${author.username} on WRITNEXA.`;
 
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://quorix.io";
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://writnexa.dev";
 
   return {
-    title: `${author.display_name} (@${author.username}) — QUORIX`,
+    title: `${author.display_name} (@${author.username}) — WRITNEXA`,
     description: desc,
     alternates: {
       canonical: `${siteUrl}/author/${author.username}`,
     },
     openGraph: {
-      title: `${author.display_name} (@${author.username}) | QUORIX`,
+      title: `${author.display_name} (@${author.username}) | WRITNEXA`,
       description: desc,
       url: `${siteUrl}/author/${author.username}`,
       type: "profile",
@@ -265,6 +266,12 @@ export default async function AuthorProfilePage({
           </div>
         </div>
       )}
+
+      {/* Author Engineering Sponsorships & Patrons */}
+      <AuthorSponsorsList
+        authorUsername={author.username}
+        authorDisplayName={author.display_name}
+      />
 
       {/* Author's Published Articles */}
       <div className="space-y-6">

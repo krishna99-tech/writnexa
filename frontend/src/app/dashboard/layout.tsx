@@ -6,6 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { WritnexaLogo } from "@/components/writnexa-logo";
 import {
   LayoutDashboard,
   FileText,
@@ -21,12 +22,14 @@ import {
   Search,
   ExternalLink,
   Sparkles,
+  DollarSign,
 } from "lucide-react";
 
 const SIDEBAR_ITEMS = [
   { label: "Overview", href: "/dashboard", icon: LayoutDashboard },
   { label: "Articles & Drafts", href: "/dashboard/articles", icon: FileText },
   { label: "Analytics", href: "/dashboard/analytics", icon: BarChart3 },
+  { label: "Monetization & Payouts", href: "/dashboard/monetization", icon: DollarSign },
   { label: "Author Profile", href: "/dashboard/profile", icon: User },
   { label: "Account Settings", href: "/dashboard/settings", icon: Settings },
 ];
@@ -65,10 +68,8 @@ export default function WorkspaceLayout({
     return (
       <div className="min-h-screen bg-zinc-950 flex items-center justify-center font-mono text-zinc-500">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 rounded bg-zinc-900 border border-zinc-700 flex items-center justify-center font-bold text-emerald-400 animate-pulse">
-            Q/
-          </div>
-          <span>Loading QUORIX Workspace...</span>
+          <WritnexaLogo variant="icon" size="lg" className="animate-pulse" />
+          <span>Loading WRITNEXA Workspace...</span>
         </div>
       </div>
     );
@@ -83,12 +84,7 @@ export default function WorkspaceLayout({
       {/* Mobile Top Header */}
       <header className="md:hidden border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur px-4 h-14 flex items-center justify-between sticky top-0 z-40">
         <div className="flex items-center gap-2">
-          <Link href="/dashboard" className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded bg-zinc-900 border border-zinc-700 flex items-center justify-center font-mono font-bold text-emerald-400 text-xs">
-              Q/
-            </div>
-            <span className="font-mono font-bold text-sm tracking-tight">QUORIX</span>
-          </Link>
+          <WritnexaLogo variant="full" size="sm" href="/dashboard" />
           <Badge variant="outline" className="text-[10px] border-emerald-800 text-emerald-400">
             Workspace
           </Badge>
@@ -121,19 +117,7 @@ export default function WorkspaceLayout({
           {/* Workspace Brand */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <Link href="/dashboard" className="flex items-center gap-2 group">
-                <div className="w-8 h-8 rounded bg-zinc-900 border border-zinc-700 flex items-center justify-center font-mono font-bold text-emerald-400 group-hover:border-emerald-500 transition-colors">
-                  Q/
-                </div>
-                <div className="flex flex-col">
-                  <span className="font-mono font-bold text-sm tracking-tight text-zinc-100">
-                    QUORIX
-                  </span>
-                  <span className="text-[10px] font-mono uppercase text-emerald-400 tracking-wider">
-                    Author Workspace
-                  </span>
-                </div>
-              </Link>
+              <WritnexaLogo variant="full" size="md" href="/dashboard" showVersion />
             </div>
 
             {/* User Quick Info */}

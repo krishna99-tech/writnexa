@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { fetchCategory, fetchArticles } from "@/lib/api";
@@ -16,13 +16,13 @@ export async function generateMetadata({
   const { slug } = await params;
   const res = await fetchCategory(slug);
   if (!res.success || !res.data?.category) {
-    return { title: "Topic Not Found | QUORIX" };
+    return { title: "Topic Not Found | WRITNEXA" };
   }
 
   const cat = res.data.category;
   return {
-    title: `${cat.name} — Technical Articles | QUORIX`,
-    description: cat.description || `Read engineering essays on ${cat.name} on QUORIX.`,
+    title: `${cat.name} — Technical Articles | WRITNEXA`,
+    description: cat.description || `Read engineering essays on ${cat.name} on WRITNEXA.`,
   };
 }
 

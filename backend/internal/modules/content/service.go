@@ -455,6 +455,10 @@ func (s *service) ListAuthors(ctx context.Context, page, perPage int) ([]AuthorS
 
 	var authors []AuthorSummary
 	for _, r := range rows {
+		// Omit internal system administration accounts from public author directory
+		if r.Username == "admin" || r.Role == "super_admin" || r.DisplayName == "System Administrator" {
+			continue
+		}
 		var headline, bio, avatar *string
 		if r.Headline.Valid {
 			headline = &r.Headline.String

@@ -1,24 +1,24 @@
-import React from "react";
+﻿import React from "react";
 import Link from "next/link";
 import { Terminal, HelpCircle } from "lucide-react";
 
 export const metadata = {
-  title: "Frequently Asked Questions — QUORIX",
+  title: "Frequently Asked Questions — WRITNEXA",
   description: "Common questions and answers regarding publishing, content ownership, and technical standards.",
 };
 
 export default function FAQsPage() {
   const faqs = [
     {
-      q: "Is QUORIX completely free for software engineers?",
-      a: "Yes. All technical articles, benchmarks, and architectural breakdowns on QUORIX are 100% free to read without paywalls or required subscriptions.",
+      q: "Is WRITNEXA completely free for software engineers?",
+      a: "Yes. All technical articles, benchmarks, and architectural breakdowns on WRITNEXA are 100% free to read without paywalls or required subscriptions.",
     },
     {
-      q: "Who owns the copyright of articles published on QUORIX?",
+      q: "Who owns the copyright of articles published on WRITNEXA?",
       a: "Authors retain full intellectual property rights to their articles. You can set canonical URLs pointing to your personal blog and export your Markdown content at any time.",
     },
     {
-      q: "What types of content are welcome on QUORIX?",
+      q: "What types of content are welcome on WRITNEXA?",
       a: "We prioritize deep technical write-ups: systems architecture, database internals, low-level concurrency, Linux kernel and eBPF tracing, networking protocols, and performance engineering.",
     },
     {
@@ -42,7 +42,7 @@ export default function FAQsPage() {
           Frequently Asked Questions
         </h1>
         <p className="text-sm text-zinc-400 font-sans">
-          Everything you need to know about publishing and reading on the QUORIX platform.
+          Everything you need to know about publishing and reading on the WRITNEXA platform.
         </p>
       </div>
 

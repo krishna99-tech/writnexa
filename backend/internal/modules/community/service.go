@@ -93,6 +93,71 @@ type CreateCommentInput struct {
 	Content  string  `json:"content" binding:"required,min=2,max=2000"`
 }
 
+type CreateSponsorshipInput struct {
+	AmountCents int     `json:"amount_cents" binding:"required,min=100"`
+	Currency    string  `json:"currency"`
+	TierName    string  `json:"tier_name"`
+	DonorName   string  `json:"donor_name"`
+	DonorEmail  string  `json:"donor_email"`
+	Message     string  `json:"message"`
+	IsAnonymous bool    `json:"is_anonymous"`
+	ArticleID   *string `json:"article_id"`
+}
+
+type SponsorshipResult struct {
+	ID        string    `json:"id"`
+	Message   string    `json:"message"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type SponsorshipItem struct {
+	ID          string    `json:"id"`
+	DonorName   string    `json:"donor_name"`
+	AmountCents int       `json:"amount_cents"`
+	Currency    string    `json:"currency"`
+	TierName    string    `json:"tier_name"`
+	Message     string    `json:"message"`
+	IsAnonymous bool      `json:"is_anonymous"`
+	CreatedAt   time.Time `json:"created_at"`
+}
+
+type AuthorSponsorshipsData struct {
+	TotalSponsors int               `json:"total_sponsors"`
+	TotalRaised   int               `json:"total_raised_cents"`
+	Sponsorships  []SponsorshipItem `json:"sponsorships"`
+}
+
+type AuthorEarningsData struct {
+	BalanceCents       int               `json:"balance_cents"`
+	TotalEarnedCents   int               `json:"total_earned_cents"`
+	PendingPayoutCents int               `json:"pending_payout_cents"`
+	TotalSponsors      int               `json:"total_sponsors"`
+	RecentTransactions []SponsorshipItem `json:"recent_transactions"`
+}
+
+type LiveTelemetryData struct {
+	ArticleSlug      string `json:"article_slug"`
+	ActiveReadersNow int    `json:"active_readers_now"`
+	AvgScrollDepth   int    `json:"avg_scroll_depth_percent"`
+}
+
+type PeerReviewInput struct {
+	Status                 string `json:"status" binding:"required"`
+	VerdictSummary         string `json:"verdict_summary" binding:"required,min=10"`
+	CodeBenchmarksVerified bool   `json:"code_benchmarks_verified"`
+}
+
+type PeerReviewItem struct {
+	ID                     string    `json:"id"`
+	ReviewerName           string    `json:"reviewer_name"`
+	ReviewerUsername       string    `json:"reviewer_username"`
+	ReviewerAvatarURL      *string   `json:"reviewer_avatar_url"`
+	Status                 string    `json:"status"`
+	VerdictSummary         string    `json:"verdict_summary"`
+	CodeBenchmarksVerified bool      `json:"code_benchmarks_verified"`
+	CreatedAt              time.Time `json:"created_at"`
+}
+
 type Service interface {
 	ToggleLike(ctx context.Context, userID uuid.UUID, articleID uuid.UUID) (*LikeResult, error)
 	ToggleBookmark(ctx context.Context, userID uuid.UUID, articleID uuid.UUID) (*BookmarkResult, error)
@@ -114,6 +179,17 @@ type Service interface {
 
 	SubscribeNewsletter(ctx context.Context, email, source string) (*NewsletterResult, error)
 	UnsubscribeNewsletter(ctx context.Context, email string) (*NewsletterResult, error)
+
+	// Creator Economy & Micro-Tipping
+	CreateSponsorship(ctx context.Context, authorUsername string, donorID *uuid.UUID, input CreateSponsorshipInput) (*SponsorshipResult, error)
+	ListAuthorSponsorships(ctx context.Context, authorUsername string) (*AuthorSponsorshipsData, error)
+	GetAuthorEarnings(ctx context.Context, authorID uuid.UUID) (*AuthorEarningsData, error)
+
+	// Live Telemetry & Peer Reviews
+	RecordReadingHeartbeat(ctx context.Context, articleSlug, visitorHash string, scrollDepth int) error
+	GetLiveTelemetry(ctx context.Context, articleSlug string) (*LiveTelemetryData, error)
+	ListArticlePeerReviews(ctx context.Context, articleSlug string) ([]PeerReviewItem, error)
+	SubmitPeerReview(ctx context.Context, reviewerID uuid.UUID, articleSlug string, input PeerReviewInput) (*PeerReviewItem, error)
 }
 
 type service struct {
@@ -954,6 +1030,273 @@ func (s *service) UnsubscribeNewsletter(ctx context.Context, emailAddr string) (
 	return &NewsletterResult{
 		Message:    "You have been successfully unsubscribed from the newsletter.",
 		Subscribed: false,
+	}, nil
+}
+
+// ==========================================
+// CREATOR MONETIZATION & SPONSORSHIPS
+// ==========================================
+
+func (s *service) CreateSponsorship(ctx context.Context, authorUsername string, donorID *uuid.UUID, input CreateSponsorshipInput) (*SponsorshipResult, error) {
+	if s.db == nil || s.db.Pool == nil {
+		return nil, errors.New("database not available")
+	}
+
+	var authorID uuid.UUID
+	err := s.db.Pool.QueryRow(ctx, `SELECT user_id FROM profiles WHERE LOWER(username) = LOWER($1)`, authorUsername).Scan(&authorID)
+	if err != nil {
+		return nil, ErrAuthorNotFound
+	}
+
+	tier := strings.TrimSpace(input.TierName)
+	if tier == "" {
+		tier = "Coffee & Server Support"
+	}
+	donorName := strings.TrimSpace(input.DonorName)
+	if donorName == "" {
+		donorName = "Anonymous Engineer"
+	}
+	currency := strings.ToUpper(strings.TrimSpace(input.Currency))
+	if currency == "" {
+		currency = "USD"
+	}
+
+	var articleID *uuid.UUID
+	if input.ArticleID != nil && *input.ArticleID != "" {
+		if aid, err := uuid.Parse(*input.ArticleID); err == nil {
+			articleID = &aid
+		}
+	}
+
+	var spID uuid.UUID
+	var createdAt time.Time
+	err = s.db.Pool.QueryRow(ctx, `
+		INSERT INTO author_sponsorships (
+			author_id, donor_id, article_id, amount_cents, currency, tier_name,
+			donor_name, donor_email, message, is_anonymous, payment_status, created_at
+		) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'completed', NOW())
+		RETURNING id, created_at
+	`, authorID, donorID, articleID, input.AmountCents, currency, tier, donorName, input.DonorEmail, input.Message, input.IsAnonymous).Scan(&spID, &createdAt)
+	if err != nil {
+		return nil, fmt.Errorf("failed to record sponsorship: %w", err)
+	}
+
+	return &SponsorshipResult{
+		ID:        spID.String(),
+		Message:   fmt.Sprintf("Successfully sponsored @%s with $%0.2f!", authorUsername, float64(input.AmountCents)/100.0),
+		CreatedAt: createdAt,
+	}, nil
+}
+
+func (s *service) ListAuthorSponsorships(ctx context.Context, authorUsername string) (*AuthorSponsorshipsData, error) {
+	if s.db == nil || s.db.Pool == nil {
+		return nil, errors.New("database not available")
+	}
+
+	rows, err := s.db.Pool.Query(ctx, `
+		SELECT s.id, s.donor_name, s.amount_cents, s.currency, s.tier_name, COALESCE(s.message, ''), s.is_anonymous, s.created_at
+		FROM author_sponsorships s
+		JOIN profiles p ON s.author_id = p.user_id
+		WHERE LOWER(p.username) = LOWER($1) AND s.payment_status = 'completed'
+		ORDER BY s.created_at DESC
+		LIMIT 25
+	`, authorUsername)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var items []SponsorshipItem
+	totalRaised := 0
+	for rows.Next() {
+		var it SponsorshipItem
+		var id uuid.UUID
+		if err := rows.Scan(&id, &it.DonorName, &it.AmountCents, &it.Currency, &it.TierName, &it.Message, &it.IsAnonymous, &it.CreatedAt); err != nil {
+			continue
+		}
+		it.ID = id.String()
+		if it.IsAnonymous {
+			it.DonorName = "Anonymous Sponsor"
+		}
+		totalRaised += it.AmountCents
+		items = append(items, it)
+	}
+
+	return &AuthorSponsorshipsData{
+		TotalSponsors: len(items),
+		TotalRaised:   totalRaised,
+		Sponsorships:  items,
+	}, nil
+}
+
+func (s *service) GetAuthorEarnings(ctx context.Context, authorID uuid.UUID) (*AuthorEarningsData, error) {
+	if s.db == nil || s.db.Pool == nil {
+		return nil, errors.New("database not available")
+	}
+
+	var totalEarned int
+	var totalSponsors int
+	_ = s.db.Pool.QueryRow(ctx, `
+		SELECT COALESCE(SUM(amount_cents), 0), COUNT(id)
+		FROM author_sponsorships
+		WHERE author_id = $1 AND payment_status = 'completed'
+	`, authorID).Scan(&totalEarned, &totalSponsors)
+
+	rows, err := s.db.Pool.Query(ctx, `
+		SELECT id, donor_name, amount_cents, currency, tier_name, COALESCE(message, ''), is_anonymous, created_at
+		FROM author_sponsorships
+		WHERE author_id = $1 AND payment_status = 'completed'
+		ORDER BY created_at DESC
+		LIMIT 20
+	`, authorID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var transactions []SponsorshipItem
+	for rows.Next() {
+		var it SponsorshipItem
+		var id uuid.UUID
+		if err := rows.Scan(&id, &it.DonorName, &it.AmountCents, &it.Currency, &it.TierName, &it.Message, &it.IsAnonymous, &it.CreatedAt); err != nil {
+			continue
+		}
+		it.ID = id.String()
+		transactions = append(transactions, it)
+	}
+
+	return &AuthorEarningsData{
+		BalanceCents:       totalEarned,
+		TotalEarnedCents:   totalEarned,
+		PendingPayoutCents: 0,
+		TotalSponsors:      totalSponsors,
+		RecentTransactions: transactions,
+	}, nil
+}
+
+// ==========================================
+// LIVE TELEMETRY & PEER REVIEWS
+// ==========================================
+
+func (s *service) RecordReadingHeartbeat(ctx context.Context, articleSlug, visitorHash string, scrollDepth int) error {
+	if s.db == nil || s.db.Pool == nil {
+		return errors.New("database not available")
+	}
+
+	_, err := s.db.Pool.Exec(ctx, `
+		INSERT INTO live_reading_heartbeats (article_id, visitor_hash, scroll_depth_percent, last_ping)
+		VALUES (
+			(SELECT id FROM articles WHERE slug = $1),
+			$2,
+			$3,
+			NOW()
+		)
+		ON CONFLICT (article_id, visitor_hash)
+		DO UPDATE SET scroll_depth_percent = EXCLUDED.scroll_depth_percent, last_ping = NOW()
+	`, articleSlug, visitorHash, scrollDepth)
+	return err
+}
+
+func (s *service) GetLiveTelemetry(ctx context.Context, articleSlug string) (*LiveTelemetryData, error) {
+	if s.db == nil || s.db.Pool == nil {
+		return nil, errors.New("database not available")
+	}
+
+	var activeReaders int
+	var avgScroll int
+	err := s.db.Pool.QueryRow(ctx, `
+		SELECT 
+			COUNT(*)::int,
+			COALESCE(AVG(scroll_depth_percent), 0)::int
+		FROM live_reading_heartbeats
+		WHERE article_id = (SELECT id FROM articles WHERE slug = $1)
+		  AND last_ping >= NOW() - INTERVAL '60 seconds'
+	`, articleSlug).Scan(&activeReaders, &avgScroll)
+	if err != nil {
+		return nil, err
+	}
+
+	if activeReaders == 0 {
+		activeReaders = 1
+	}
+
+	return &LiveTelemetryData{
+		ArticleSlug:      articleSlug,
+		ActiveReadersNow: activeReaders,
+		AvgScrollDepth:   avgScroll,
+	}, nil
+}
+
+func (s *service) ListArticlePeerReviews(ctx context.Context, articleSlug string) ([]PeerReviewItem, error) {
+	if s.db == nil || s.db.Pool == nil {
+		return nil, errors.New("database not available")
+	}
+
+	rows, err := s.db.Pool.Query(ctx, `
+		SELECT pr.id, pr.status, pr.verdict_summary, pr.code_benchmarks_verified, pr.created_at,
+		       p.username, p.display_name, p.avatar_url
+		FROM article_peer_reviews pr
+		JOIN profiles p ON pr.reviewer_id = p.user_id
+		WHERE pr.article_id = (SELECT id FROM articles WHERE slug = $1)
+		ORDER BY pr.created_at DESC
+	`, articleSlug)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var reviews []PeerReviewItem
+	for rows.Next() {
+		var r PeerReviewItem
+		var id uuid.UUID
+		var avatar *string
+		if err := rows.Scan(&id, &r.Status, &r.VerdictSummary, &r.CodeBenchmarksVerified, &r.CreatedAt, &r.ReviewerUsername, &r.ReviewerName, &avatar); err != nil {
+			continue
+		}
+		r.ID = id.String()
+		r.ReviewerAvatarURL = avatar
+		reviews = append(reviews, r)
+	}
+	return reviews, nil
+}
+
+func (s *service) SubmitPeerReview(ctx context.Context, reviewerID uuid.UUID, articleSlug string, input PeerReviewInput) (*PeerReviewItem, error) {
+	if s.db == nil || s.db.Pool == nil {
+		return nil, errors.New("database not available")
+	}
+
+	var articleID uuid.UUID
+	err := s.db.Pool.QueryRow(ctx, `SELECT id FROM articles WHERE slug = $1`, articleSlug).Scan(&articleID)
+	if err != nil {
+		return nil, ErrArticleNotFound
+	}
+
+	var reviewID uuid.UUID
+	var createdAt time.Time
+	err = s.db.Pool.QueryRow(ctx, `
+		INSERT INTO article_peer_reviews (article_id, reviewer_id, status, verdict_summary, code_benchmarks_verified, created_at, updated_at)
+		VALUES ($1, $2, $3, $4, $5, NOW(), NOW())
+		ON CONFLICT (article_id, reviewer_id)
+		DO UPDATE SET status = EXCLUDED.status, verdict_summary = EXCLUDED.verdict_summary, code_benchmarks_verified = EXCLUDED.code_benchmarks_verified, updated_at = NOW()
+		RETURNING id, created_at
+	`, articleID, reviewerID, input.Status, input.VerdictSummary, input.CodeBenchmarksVerified).Scan(&reviewID, &createdAt)
+	if err != nil {
+		return nil, err
+	}
+
+	var username, displayName string
+	var avatar *string
+	_ = s.db.Pool.QueryRow(ctx, `SELECT username, display_name, avatar_url FROM profiles WHERE user_id = $1`, reviewerID).Scan(&username, &displayName, &avatar)
+
+	return &PeerReviewItem{
+		ID:                     reviewID.String(),
+		ReviewerName:           displayName,
+		ReviewerUsername:       username,
+		ReviewerAvatarURL:      avatar,
+		Status:                 input.Status,
+		VerdictSummary:         input.VerdictSummary,
+		CodeBenchmarksVerified: input.CodeBenchmarksVerified,
+		CreatedAt:              createdAt,
 	}, nil
 }
 

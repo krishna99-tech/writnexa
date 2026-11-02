@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, Suspense } from "react";
 import Link from "next/link";
@@ -69,7 +69,7 @@ function ResetPasswordForm() {
       <CardHeader className="space-y-1">
         <div className="flex items-center gap-2 text-emerald-400 font-mono text-xs">
           <Terminal className="w-4 h-4" />
-          <span>set_new_password // auth.quorix.io</span>
+          <span>set_new_password // auth.writnexa.dev</span>
         </div>
         <CardTitle className="text-2xl font-bold tracking-tight text-zinc-100">
           Reset Password
@@ -173,12 +173,12 @@ export default function ResetPasswordPage() {
     <AuthSplitLayout
       pageType="reset-password"
       title="Set New Master Password"
-      description="Update your QUORIX developer account password. Your new secret will be hardened with Argon2id memory-hard key derivation to withstand GPU brute-forcing."
+      description="Update your WRITNEXA developer account password. Your new secret will be hardened with Argon2id memory-hard key derivation to withstand GPU brute-forcing."
       badge="Argon2id Hardening"
       quote={{
         text: "Our cryptographic password pipeline enforces 64MB memory cost with parallelism across multi-threaded CPU instructions.",
         author: "Cryptographic Engineering",
-        role: "QUORIX Core Security",
+        role: "WRITNEXA Core Security",
       }}
     >
       <Suspense fallback={<div className="text-center font-mono text-zinc-500">Loading form...</div>}>

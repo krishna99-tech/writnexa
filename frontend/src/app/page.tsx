@@ -31,7 +31,13 @@ export default async function HomePage() {
   const trending = trendingRes.data?.articles || [];
   const latest = latestRes.data?.articles || [];
   const categories = categoriesRes.data?.categories || [];
-  const authors = authorsRes.data?.authors || [];
+  const authors = (authorsRes.data?.authors || []).filter(
+    (a) =>
+      a.username !== "admin" &&
+      a.username !== "super_admin" &&
+      a.display_name !== "System Administrator" &&
+      !a.display_name.toLowerCase().includes("administrator")
+  );
   const databaseHealthy =
     healthRes.data?.services?.database?.status === "connected" ||
     healthRes.data?.status === "healthy";

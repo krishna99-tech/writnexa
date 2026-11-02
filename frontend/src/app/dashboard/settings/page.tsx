@@ -1,8 +1,9 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
+import { useTheme } from "@/lib/theme-context";
 import { API_BASE_URL, ApiResponse } from "@/lib/api";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -65,8 +66,8 @@ export default function WorkspaceSettingsPage() {
   const [isLoadingSessions, setIsLoadingSessions] = useState(false);
   const [sessionsError, setSessionsError] = useState<string | null>(null);
 
-  // Preferences state
-  const [theme, setTheme] = useState<"dark" | "light" | "system">("dark");
+  // Preferences state (powered by Global ThemeProvider)
+  const { theme, setTheme } = useTheme();
   const [notifyFollowers, setNotifyFollowers] = useState(true);
   const [notifyComments, setNotifyComments] = useState(true);
   const [notifyDigest, setNotifyDigest] = useState(false);
@@ -364,7 +365,7 @@ export default function WorkspaceSettingsPage() {
                 <span>Active Login Sessions</span>
               </CardTitle>
               <CardDescription className="text-xs text-zinc-400 font-mono">
-                Devices currently authenticated into your QUORIX developer account.
+                Devices currently authenticated into your WRITNEXA developer account.
               </CardDescription>
             </div>
             <Button

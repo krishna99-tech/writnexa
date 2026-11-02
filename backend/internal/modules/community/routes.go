@@ -11,6 +11,13 @@ func RegisterRoutes(r *gin.RouterGroup, h *Handler, cfg *config.Config) {
 	// Public comments endpoint (Guests can read discussions without authentication)
 	// Uses :slug wildcard matching content.RegisterRoutes to avoid Gin radix tree conflict
 	r.GET("/articles/:slug/comments", h.ListComments)
+	r.POST("/articles/:slug/heartbeat", h.RecordHeartbeat)
+	r.GET("/articles/:slug/live-telemetry", h.GetLiveTelemetry)
+	r.GET("/articles/:slug/peer-reviews", h.ListPeerReviews)
+
+	// Public Creator Sponsorships
+	r.GET("/authors/:username/sponsorships", h.ListAuthorSponsorships)
+	r.POST("/authors/:username/sponsorships", h.CreateSponsorship)
 
 	// Public Newsletter Subscription Endpoints
 	newsletter := r.Group("/newsletter")
@@ -30,6 +37,7 @@ func RegisterRoutes(r *gin.RouterGroup, h *Handler, cfg *config.Config) {
 		articles.POST("/:slug/bookmark", h.ToggleBookmark)
 		articles.GET("/:slug/interaction", h.GetInteractionStatus)
 		articles.POST("/:slug/comments", h.CreateComment)
+		articles.POST("/:slug/peer-reviews", h.SubmitPeerReview)
 	}
 
 	// Comment Modifications
@@ -69,6 +77,13 @@ func RegisterRoutes(r *gin.RouterGroup, h *Handler, cfg *config.Config) {
 		notifications.GET("/unread-count", h.GetUnreadCount)
 		notifications.POST("/:id/read", h.MarkNotificationRead)
 		notifications.POST("/read-all", h.MarkAllNotificationsRead)
+	}
+
+	// Author Monetization & Earnings Dashboard
+	dash := r.Group("/dashboard")
+	dash.Use(authMW)
+	{
+		dash.GET("/monetization", h.GetAuthorEarnings)
 	}
 }
 

@@ -425,6 +425,117 @@ func (h *Handler) SubscribeNewsletter(c *gin.Context) {
 	response.JSON(c, http.StatusOK, result)
 }
 
+// CreateSponsorship handles POST /api/v1/authors/:username/sponsorships
+func (h *Handler) CreateSponsorship(c *gin.Context) {
+	username := c.Param("username")
+	var input CreateSponsorshipInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		response.Error(c, http.StatusBadRequest, "INVALID_INPUT", err.Error())
+		return
+	}
+
+	var donorID *uuid.UUID
+	if val, exists := c.Get(middleware.ContextUserID); exists {
+		if uid, ok := val.(uuid.UUID); ok {
+			donorID = &uid
+		}
+	}
+
+	result, err := h.svc.CreateSponsorship(c.Request.Context(), username, donorID, input)
+	if err != nil {
+		response.Error(c, http.StatusBadRequest, "SPONSORSHIP_FAILED", err.Error())
+		return
+	}
+
+	response.JSON(c, http.StatusCreated, result)
+}
+
+// ListAuthorSponsorships handles GET /api/v1/authors/:username/sponsorships
+func (h *Handler) ListAuthorSponsorships(c *gin.Context) {
+	username := c.Param("username")
+	data, err := h.svc.ListAuthorSponsorships(c.Request.Context(), username)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, "FETCH_FAILED", err.Error())
+		return
+	}
+	response.JSON(c, http.StatusOK, data)
+}
+
+// GetAuthorEarnings handles GET /api/v1/dashboard/monetization
+func (h *Handler) GetAuthorEarnings(c *gin.Context) {
+	userID, ok := getContextUserID(c)
+	if !ok {
+		return
+	}
+
+	data, err := h.svc.GetAuthorEarnings(c.Request.Context(), userID)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, "FETCH_FAILED", err.Error())
+		return
+	}
+	response.JSON(c, http.StatusOK, data)
+}
+
+// RecordHeartbeat handles POST /api/v1/articles/:slug/heartbeat
+func (h *Handler) RecordHeartbeat(c *gin.Context) {
+	slug := c.Param("slug")
+	var req struct {
+		VisitorHash string `json:"visitor_hash" binding:"required"`
+		ScrollDepth int    `json:"scroll_depth"`
+	}
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.Error(c, http.StatusBadRequest, "INVALID_INPUT", "Visitor hash required")
+		return
+	}
+
+	_ = h.svc.RecordReadingHeartbeat(c.Request.Context(), slug, req.VisitorHash, req.ScrollDepth)
+	response.JSON(c, http.StatusOK, gin.H{"recorded": true})
+}
+
+// GetLiveTelemetry handles GET /api/v1/articles/:slug/live-telemetry
+func (h *Handler) GetLiveTelemetry(c *gin.Context) {
+	slug := c.Param("slug")
+	data, err := h.svc.GetLiveTelemetry(c.Request.Context(), slug)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, "FETCH_FAILED", err.Error())
+		return
+	}
+	response.JSON(c, http.StatusOK, data)
+}
+
+// ListPeerReviews handles GET /api/v1/articles/:slug/peer-reviews
+func (h *Handler) ListPeerReviews(c *gin.Context) {
+	slug := c.Param("slug")
+	reviews, err := h.svc.ListArticlePeerReviews(c.Request.Context(), slug)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, "FETCH_FAILED", err.Error())
+		return
+	}
+	response.JSON(c, http.StatusOK, gin.H{"reviews": reviews})
+}
+
+// SubmitPeerReview handles POST /api/v1/articles/:slug/peer-reviews
+func (h *Handler) SubmitPeerReview(c *gin.Context) {
+	userID, ok := getContextUserID(c)
+	if !ok {
+		return
+	}
+
+	slug := c.Param("slug")
+	var input PeerReviewInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		response.Error(c, http.StatusBadRequest, "INVALID_INPUT", err.Error())
+		return
+	}
+
+	review, err := h.svc.SubmitPeerReview(c.Request.Context(), userID, slug, input)
+	if err != nil {
+		response.Error(c, http.StatusBadRequest, "SUBMIT_FAILED", err.Error())
+		return
+	}
+	response.JSON(c, http.StatusCreated, review)
+}
+
 // UnsubscribeNewsletter handles POST /api/v1/newsletter/unsubscribe
 func (h *Handler) UnsubscribeNewsletter(c *gin.Context) {
 	var req NewsletterRequest

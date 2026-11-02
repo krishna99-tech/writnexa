@@ -18,7 +18,13 @@ import {
   Search,
   LayoutDashboard,
   ArrowRight,
+  Menu,
+  X,
+  Sun,
+  Moon,
 } from "lucide-react";
+import { useTheme } from "@/lib/theme-context";
+import { WritnexaLogo } from "./writnexa-logo";
 import { Button } from "./ui/button";
 import { Badge } from "./ui/badge";
 
@@ -66,7 +72,14 @@ function PublicNavbar({
   isLoading: boolean;
   accessToken: string | null;
 }) {
+  const pathname = usePathname();
+  const { theme, setTheme, resolvedTheme } = useTheme();
   const [unreadCount, setUnreadCount] = useState<number>(0);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     if (!accessToken) {
@@ -95,17 +108,7 @@ function PublicNavbar({
     <header className="sticky top-0 z-50 border-b border-zinc-800/80 bg-zinc-950/80 backdrop-blur-md">
       <div className="container mx-auto px-4 h-14 flex items-center justify-between">
         <div className="flex items-center gap-6">
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="w-8 h-8 rounded bg-zinc-900 border border-zinc-700 flex items-center justify-center font-mono font-bold text-emerald-400 group-hover:border-emerald-500 transition-colors">
-              Q/
-            </div>
-            <span className="font-mono font-bold tracking-tight text-lg text-zinc-100">
-              QUORIX
-            </span>
-            <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-400 border border-zinc-700">
-              v1.0-alpha
-            </span>
-          </Link>
+          <WritnexaLogo variant="full" size="sm" href="/" showVersion />
 
           <nav className="hidden md:flex items-center gap-5 text-sm font-medium text-zinc-400">
             <Link
@@ -164,12 +167,28 @@ function PublicNavbar({
               variant="ghost"
               size="sm"
               className="h-8 gap-1.5 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 font-mono text-xs"
-              title="Search QUORIX"
+              title="Search WRITNEXA"
             >
               <Search className="w-4 h-4 text-emerald-400" />
               <span className="hidden sm:inline">Search</span>
             </Button>
           </Link>
+
+          {/* Theme Quick Toggle (Light / Dark) */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+            className="h-8 w-8 p-0 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900"
+            title={`Switch to ${resolvedTheme === "dark" ? "Light" : "Dark"} Mode`}
+            aria-label="Toggle theme"
+          >
+            {resolvedTheme === "dark" ? (
+              <Sun className="w-4 h-4 text-amber-400" />
+            ) : (
+              <Moon className="w-4 h-4 text-indigo-400" />
+            )}
+          </Button>
 
           {isLoading ? (
             <div className="w-20 h-8 rounded bg-zinc-900 animate-pulse" />
@@ -226,7 +245,7 @@ function PublicNavbar({
                 </Button>
               </Link>
 
-              <Link href="/dashboard/settings">
+              <Link href="/dashboard/settings" className="hidden md:inline-flex">
                 <Button
                   variant="outline"
                   size="sm"
@@ -241,7 +260,7 @@ function PublicNavbar({
                 variant="ghost"
                 size="sm"
                 onClick={() => logout()}
-                className="h-8 text-zinc-400 hover:text-rose-400 hover:bg-rose-950/30"
+                className="hidden md:inline-flex h-8 text-zinc-400 hover:text-rose-400 hover:bg-rose-950/30"
               >
                 <LogOut className="w-3.5 h-3.5 sm:mr-1" />
                 <span className="hidden sm:inline">Sign Out</span>
@@ -268,8 +287,154 @@ function PublicNavbar({
               </Link>
             </div>
           )}
+
+          {/* Mobile Hamburger Toggle Button */}
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="md:hidden h-8 w-8 p-0 text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900 ml-1"
+            aria-label="Toggle navigation menu"
+          >
+            {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+          </Button>
         </div>
       </div>
+
+      {/* Mobile Drawer Dropdown Menu */}
+      {mobileMenuOpen && (
+        <div className="md:hidden border-t border-zinc-800/80 bg-zinc-950/98 backdrop-blur-xl px-4 py-4 space-y-4 font-mono text-xs shadow-2xl animate-in slide-in-from-top-2 duration-200">
+          {user && (
+            <div className="flex items-center justify-between pb-3 border-b border-zinc-800/80">
+              <div className="flex items-center gap-2">
+                <WritnexaLogo variant="icon" size="xs" />
+                <span className="text-zinc-300 font-semibold">@{profile?.username}</span>
+              </div>
+              <Badge variant="outline" className="text-[10px] uppercase font-mono border-zinc-700 text-emerald-400">
+                {user.role}
+              </Badge>
+            </div>
+          )}
+
+          <nav className="space-y-1">
+            <Link
+              href="/explore"
+              className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-zinc-300 hover:text-zinc-100 hover:bg-zinc-900 transition-colors"
+            >
+              <BookOpen className="w-4 h-4 text-emerald-400" />
+              <span>Explore Knowledge</span>
+            </Link>
+
+            {user && (
+              <Link
+                href="/feed/following"
+                className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-zinc-300 hover:text-zinc-100 hover:bg-zinc-900 transition-colors"
+              >
+                <Rss className="w-4 h-4 text-emerald-400" />
+                <span>Following Feed</span>
+              </Link>
+            )}
+
+            <Link
+              href="/topics"
+              className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-zinc-300 hover:text-zinc-100 hover:bg-zinc-900 transition-colors"
+            >
+              <span className="w-4 text-center font-bold text-zinc-500">#</span>
+              <span>All Topics</span>
+            </Link>
+
+            <Link
+              href="/authors"
+              className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-zinc-300 hover:text-zinc-100 hover:bg-zinc-900 transition-colors"
+            >
+              <User className="w-4 h-4 text-zinc-500" />
+              <span>Authors Directory</span>
+            </Link>
+
+            {user && (
+              <>
+                <div className="pt-2 pb-1 border-t border-zinc-800/60 text-[10px] uppercase tracking-wider text-zinc-500">
+                  Creator & Account
+                </div>
+
+                <Link
+                  href="/dashboard"
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-emerald-400 font-semibold hover:bg-zinc-900 transition-colors"
+                >
+                  <LayoutDashboard className="w-4 h-4" />
+                  <span>Author Workspace</span>
+                </Link>
+
+                <Link
+                  href="/library/bookmarks"
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-zinc-300 hover:text-zinc-100 hover:bg-zinc-900 transition-colors"
+                >
+                  <Bookmark className="w-4 h-4 text-amber-400" />
+                  <span>Saved Bookmarks</span>
+                </Link>
+
+                <Link
+                  href="/dashboard/settings"
+                  className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-zinc-300 hover:text-zinc-100 hover:bg-zinc-900 transition-colors"
+                >
+                  <Settings className="w-4 h-4 text-zinc-400" />
+                  <span>Settings & Profile</span>
+                </Link>
+
+                {(user.role === "admin" || user.role === "super_admin") && (
+                  <Link
+                    href="/admin"
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-amber-400 font-semibold hover:bg-zinc-900 transition-colors"
+                  >
+                    <Shield className="w-4 h-4 text-amber-400" />
+                    <span>Admin Center</span>
+                  </Link>
+                )}
+
+                <div className="pt-2 border-t border-zinc-800/60 flex items-center justify-between px-3 py-1 text-zinc-400">
+                  <span className="flex items-center gap-2">
+                    {resolvedTheme === "dark" ? <Moon className="w-4 h-4 text-indigo-400" /> : <Sun className="w-4 h-4 text-amber-400" />}
+                    <span>Theme: {resolvedTheme === "dark" ? "Dark" : "Light"}</span>
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
+                    className="h-7 text-xs font-mono border-zinc-800"
+                  >
+                    Switch
+                  </Button>
+                </div>
+
+                <div className="pt-2 border-t border-zinc-800/60">
+                  <button
+                    onClick={() => logout()}
+                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-rose-400 hover:bg-rose-950/20 transition-colors text-left"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
+              </>
+            )}
+
+            {!user && (
+              <div className="pt-3 border-t border-zinc-800/60 flex flex-col gap-2">
+                <Link href="/login" className="w-full">
+                  <Button variant="outline" className="w-full h-9 border-zinc-800 text-zinc-300 font-mono text-xs">
+                    Sign In
+                  </Button>
+                </Link>
+                <Link href="/register" className="w-full">
+                  <Button className="w-full h-9 bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-semibold font-mono text-xs">
+                    Register Free Account
+                  </Button>
+                </Link>
+              </div>
+            )}
+          </nav>
+        </div>
+      )}
     </header>
   );
 }

@@ -1,9 +1,9 @@
-import React from "react";
+﻿import React from "react";
 import { Terminal } from "lucide-react";
 
 export const metadata = {
-  title: "Cookie Policy — QUORIX",
-  description: "Information about how QUORIX uses HTTP cookies and session tokens.",
+  title: "Cookie Policy — WRITNEXA",
+  description: "Information about how WRITNEXA uses HTTP cookies and session tokens.",
 };
 
 export default function CookiePolicyPage() {
@@ -26,7 +26,7 @@ export default function CookiePolicyPage() {
         <section className="space-y-2">
           <h2 className="text-base font-bold text-zinc-100">1. Essential Authentication Cookies</h2>
           <p>
-            QUORIX uses secure, HttpOnly, SameSite=Strict cookies solely to manage rotating refresh token leases (`quorix_refresh_token`). These cookies protect against cross-site scripting (XSS) and cross-site request forgery (CSRF).
+            WRITNEXA uses secure, HttpOnly, SameSite=Strict cookies solely to manage rotating refresh token leases (`quorix_refresh_token`). These cookies protect against cross-site scripting (XSS) and cross-site request forgery (CSRF).
           </p>
         </section>
 

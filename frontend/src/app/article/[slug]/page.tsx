@@ -24,6 +24,8 @@ import { FollowButton } from "@/components/follow-button";
 import { AnalyticsTracker } from "@/components/analytics-tracker";
 import { AdPlacement } from "@/components/ad-placement";
 import { MarkdownRenderer } from "@/components/markdown-editor";
+import { LiveReaderTelemetry } from "@/components/live-reader-telemetry";
+import { PeerReviewBadge } from "@/components/peer-review-badge";
 
 export const revalidate = 30;
 
@@ -38,7 +40,7 @@ export async function generateMetadata({
 
   if (!res.success || !res.data?.article) {
     return {
-      title: "Article Not Found | QUORIX",
+      title: "Article Not Found | WRITNEXA",
       description: "The requested technical article could not be located.",
     };
   }
@@ -46,13 +48,13 @@ export async function generateMetadata({
   const article = res.data.article;
   const desc =
     article.subtitle ||
-    `Read ${article.title} by @${article.author.username} on QUORIX.`;
+    `Read ${article.title} by @${article.author.username} on WRITNEXA.`;
 
   return {
-    title: `${article.title} — QUORIX`,
+    title: `${article.title} — WRITNEXA`,
     description: desc,
     alternates: {
-      canonical: article.canonical_url || `https://quorix.io/article/${article.slug}`,
+      canonical: article.canonical_url || `https://writnexa.dev/article/${article.slug}`,
     },
     openGraph: {
       title: article.title,
@@ -60,7 +62,7 @@ export async function generateMetadata({
       type: "article",
       publishedTime: article.published_at,
       authors: [article.author.display_name || article.author.username],
-      url: `https://quorix.io/article/${article.slug}`,
+      url: `https://writnexa.dev/article/${article.slug}`,
     },
     twitter: {
       card: "summary_large_image",
@@ -130,6 +132,8 @@ export default async function ArticleDetailPage({
             <Eye className="w-3 h-3" />
             <span>{article.views_count} views</span>
           </span>
+          <span className="text-zinc-600 font-mono text-xs">&bull;</span>
+          <LiveReaderTelemetry articleSlug={article.slug} />
         </div>
 
         <h1 className="text-3xl sm:text-5xl font-extrabold tracking-tight text-zinc-100 leading-tight">
@@ -176,7 +180,7 @@ export default async function ArticleDetailPage({
             <a
               href={`https://twitter.com/intent/tweet?text=${encodeURIComponent(
                 article.title
-              )}&url=${encodeURIComponent(`https://quorix.io/article/${article.slug}`)}`}
+              )}&url=${encodeURIComponent(`https://writnexa.dev/article/${article.slug}`)}`}
               target="_blank"
               rel="noreferrer"
               className="p-2 rounded-md border border-zinc-800 bg-zinc-900/60 hover:bg-zinc-800 text-zinc-400 hover:text-zinc-100 transition-colors text-xs font-mono flex items-center gap-1"
@@ -199,6 +203,9 @@ export default async function ArticleDetailPage({
           initialCommentsCount={article.comments_count}
         />
       </header>
+
+      {/* Architecture Guild Peer Review Verdict */}
+      <PeerReviewBadge articleSlug={article.slug} />
 
       {/* Main Technical Article Body */}
       <section className="max-w-none font-sans leading-relaxed text-base">
@@ -280,6 +287,12 @@ export default async function ArticleDetailPage({
               </span>
             </div>
             <div className="flex items-center gap-2">
+              <Link href={`/author/${article.author.username}`}>
+                <Button size="sm" className="bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-bold font-mono text-xs gap-1.5">
+                  <Heart className="w-3.5 h-3.5 fill-zinc-950" />
+                  <span>Sponsor</span>
+                </Button>
+              </Link>
               <FollowButton targetUsername={article.author.username} />
               <Link href={`/author/${article.author.username}`}>
                 <Button variant="outline" size="sm" className="border-zinc-700 font-mono text-xs">

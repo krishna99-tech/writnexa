@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState } from "react";
 import Link from "next/link";
@@ -83,10 +83,10 @@ export default function RegisterPage() {
     <AuthSplitLayout
       pageType="register"
       title="Join the Developer Ecosystem"
-      description="Create your QUORIX developer account to publish architecture essays, curate reading lists, bookmark algorithms, and engage in high-signal technical discussions."
+      description="Create your WRITNEXA developer account to publish architecture essays, curate reading lists, bookmark algorithms, and engage in high-signal technical discussions."
       badge="Developer Community"
       quote={{
-        text: "Sharing our multi-region replication postmortem on QUORIX connected us with leading distributed systems engineers.",
+        text: "Sharing our multi-region replication postmortem on WRITNEXA connected us with leading distributed systems engineers.",
         author: "Devon Zhang",
         role: "Principal Architect",
       }}
@@ -95,7 +95,7 @@ export default function RegisterPage() {
         <CardHeader className="space-y-1">
           <div className="flex items-center gap-2 text-emerald-400 font-mono text-xs">
             <Terminal className="w-4 h-4" />
-            <span>developer_registration // auth.quorix.io</span>
+            <span>developer_registration // auth.writnexa.dev</span>
           </div>
           <CardTitle className="text-2xl font-bold tracking-tight text-zinc-100">
             Create Developer Account
@@ -143,7 +143,7 @@ export default function RegisterPage() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="developer@quorix.io"
+                  placeholder="developer@writnexa.dev"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required

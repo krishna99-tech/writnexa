@@ -610,7 +610,7 @@ export default function AdminAdsPage() {
                 <span>Third-Party Revenue Transparency & Verification</span>
               </h3>
               <p className="text-xs text-zinc-400 font-sans leading-relaxed max-w-2xl">
-                QUORIX strictly distinguishes <strong>internal contract estimates</strong> (calculated via direct campaign CPM/CPC formulas) from <strong>third-party provider-reported revenues</strong> (such as verified Google AdSense payment statements). Fabricating metrics or conflating estimates is strictly prohibited.
+                WRITNEXA strictly distinguishes <strong>internal contract estimates</strong> (calculated via direct campaign CPM/CPC formulas) from <strong>third-party provider-reported revenues</strong> (such as verified Google AdSense payment statements). Fabricating metrics or conflating estimates is strictly prohibited.
               </p>
             </div>
             <Button
@@ -792,7 +792,7 @@ export default function AdminAdsPage() {
                     required
                     value={campTargetUrl}
                     onChange={(e) => setCampTargetUrl(e.target.value)}
-                    placeholder="https://neon.tech/?ref=quorix"
+                    placeholder="https://neon.tech/?ref=writnexa"
                     className="bg-zinc-900 border-zinc-800 text-zinc-100"
                   />
                 </div>

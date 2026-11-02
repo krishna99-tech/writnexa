@@ -190,9 +190,9 @@ export default function AdminUsersPage() {
       </div>
 
       {/* Users Table */}
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/30 overflow-hidden">
+      <div className="rounded-xl border border-zinc-800 bg-zinc-900/30 overflow-hidden shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs font-mono">
+          <table className="w-full min-w-[760px] text-left text-xs font-mono">
             <thead className="bg-zinc-900/80 border-b border-zinc-800 text-zinc-400">
               <tr>
                 <th className="py-3 px-4 font-semibold">User</th>

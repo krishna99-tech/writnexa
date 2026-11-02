@@ -1,8 +1,8 @@
-import React from "react";
+﻿import React from "react";
 import { Terminal, ShieldCheck } from "lucide-react";
 
 export const metadata = {
-  title: "Privacy Policy — QUORIX",
+  title: "Privacy Policy — WRITNEXA",
   description: "Platform privacy commitments, telemetry handling, and data retention policies.",
 };
 

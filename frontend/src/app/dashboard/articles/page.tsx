@@ -118,7 +118,7 @@ export default function WorkspaceArticlesPage() {
       {/* Filter and Search Bar */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
         {/* Status Filter Tabs */}
-        <div className="flex items-center gap-1.5 p-1 bg-zinc-900 border border-zinc-800 rounded-lg text-xs font-mono w-full sm:w-auto">
+        <div className="flex items-center gap-1.5 p-1 bg-zinc-900 border border-zinc-800 rounded-lg text-xs font-mono w-full sm:w-auto overflow-x-auto">
           {(["all", "published", "draft", "archived"] as const).map((s) => (
             <button
               key={s}
@@ -235,7 +235,7 @@ export default function WorkspaceArticlesPage() {
                 </div>
 
                 {/* Article Actions */}
-                <div className="flex items-center gap-2 shrink-0 font-mono text-xs w-full md:w-auto justify-end border-t md:border-t-0 border-zinc-800/80 pt-3 md:pt-0">
+                <div className="flex flex-wrap items-center gap-2 shrink-0 font-mono text-xs w-full md:w-auto justify-start md:justify-end border-t md:border-t-0 border-zinc-800/80 pt-3 md:pt-0">
                   {art.status === "published" && (
                     <Link href={`/article/${art.slug}`} target="_blank">
                       <Button variant="outline" size="sm" className="h-8 border-zinc-800 text-zinc-300 gap-1.5">

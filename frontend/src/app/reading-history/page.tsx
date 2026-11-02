@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
@@ -88,7 +88,7 @@ export default function ReadingHistoryPage() {
             <span>Reading History</span>
           </h1>
           <p className="text-xs text-zinc-400 font-mono mt-1">
-            Articles and engineering essays you have read across QUORIX.
+            Articles and engineering essays you have read across WRITNEXA.
           </p>
         </div>
 
@@ -116,7 +116,7 @@ export default function ReadingHistoryPage() {
             No reading history recorded yet
           </h3>
           <p className="text-xs text-zinc-500 font-mono max-w-sm mx-auto">
-            Explore distributed systems, compilers, security, and Linux kernel essays on QUORIX.
+            Explore distributed systems, compilers, security, and Linux kernel essays on WRITNEXA.
           </p>
           <Link href="/explore">
             <Button size="sm" className="bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-semibold font-mono text-xs">

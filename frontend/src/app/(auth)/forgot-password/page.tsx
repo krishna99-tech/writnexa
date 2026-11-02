@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState } from "react";
 import Link from "next/link";
@@ -56,14 +56,14 @@ export default function ForgotPasswordPage() {
       quote={{
         text: "Zero-knowledge secret recovery with cryptographic nonces ensures our platform members are completely shielded from credential stuffing attacks.",
         author: "Security Operations",
-        role: "QUORIX Core Team",
+        role: "WRITNEXA Core Team",
       }}
     >
       <Card className="border-zinc-800 bg-zinc-900/40 backdrop-blur shadow-2xl">
         <CardHeader className="space-y-1">
           <div className="flex items-center gap-2 text-emerald-400 font-mono text-xs">
             <Terminal className="w-4 h-4" />
-            <span>password_recovery // auth.quorix.io</span>
+            <span>password_recovery // auth.writnexa.dev</span>
           </div>
           <CardTitle className="text-2xl font-bold tracking-tight text-zinc-100">
             Forgot Password
@@ -115,7 +115,7 @@ export default function ForgotPasswordPage() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="developer@quorix.io"
+                  placeholder="developer@writnexa.dev"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required

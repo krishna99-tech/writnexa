@@ -1,9 +1,9 @@
-import React from "react";
+﻿import React from "react";
 import Link from "next/link";
 import { Terminal, BookOpen, PenTool, Key, Search, Users } from "lucide-react";
 
 export const metadata = {
-  title: "Help Center — QUORIX",
+  title: "Help Center — WRITNEXA",
   description: "Knowledge base and troubleshooting guides for readers and authors.",
 };
 
@@ -16,7 +16,7 @@ export default function HelpPage() {
           <span>DOCUMENTATION & USER GUIDES</span>
         </div>
         <h1 className="text-4xl font-extrabold text-zinc-100">
-          QUORIX Help Center
+          WRITNEXA Help Center
         </h1>
         <p className="text-sm text-zinc-400 font-sans">
           Find answers to common questions about reading, author studio workflows, and account settings.

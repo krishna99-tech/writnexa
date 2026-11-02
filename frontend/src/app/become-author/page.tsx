@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
@@ -122,7 +122,7 @@ export default function BecomeAuthorPage() {
           Author Onboarding
         </Badge>
         <h1 className="text-3xl font-extrabold tracking-tight text-zinc-100 font-mono">
-          Become a QUORIX Author
+          Become a WRITNEXA Author
         </h1>
         <p className="text-sm text-zinc-400 font-sans max-w-md mx-auto">
           Share your systems architecture essays, compiler research, and open-source breakthroughs with engineers worldwide.
@@ -229,7 +229,7 @@ export default function BecomeAuthorPage() {
                   className="rounded border-zinc-700 bg-zinc-900 text-emerald-500 focus:ring-0 mt-0.5"
                 />
                 <span className="text-xs font-mono text-zinc-300">
-                  I agree to the QUORIX technical publishing guidelines, terms of service, and commit to publishing original, verifiable engineering work.
+                  I agree to the WRITNEXA technical publishing guidelines, terms of service, and commit to publishing original, verifiable engineering work.
                 </span>
               </label>
             </div>

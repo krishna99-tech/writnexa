@@ -1,8 +1,8 @@
-import React from "react";
+﻿import React from "react";
 import { Terminal } from "lucide-react";
 
 export const metadata = {
-  title: "Copyright Policy & DMCA — QUORIX",
+  title: "Copyright Policy & DMCA — WRITNEXA",
   description: "Intellectual property protection, attribution rules, and notice/takedown procedures.",
 };
 
@@ -26,17 +26,17 @@ export default function CopyrightPolicyPage() {
         <section className="space-y-2">
           <h2 className="text-base font-bold text-zinc-100">1. Intellectual Property Protection</h2>
           <p>
-            QUORIX respects the intellectual property rights of software authors, researchers, and engineers. Authors maintain complete copyright over original writings, benchmarks, and architectural designs posted on the platform.
+            WRITNEXA respects the intellectual property rights of software authors, researchers, and engineers. Authors maintain complete copyright over original writings, benchmarks, and architectural designs posted on the platform.
           </p>
         </section>
 
         <section className="space-y-2">
           <h2 className="text-base font-bold text-zinc-100">2. Notice and Takedown Requests</h2>
           <p>
-            If you believe your copyrighted work has been reproduced on QUORIX in a manner that constitutes infringement, please submit a written notification with the URL, proof of ownership, and signature to:
+            If you believe your copyrighted work has been reproduced on WRITNEXA in a manner that constitutes infringement, please submit a written notification with the URL, proof of ownership, and signature to:
           </p>
           <p className="font-mono text-emerald-400 text-xs pt-1">
-            legal@quorix.io &bull; Subject: DMCA Takedown Request
+            legal@writnexa.dev &bull; Subject: DMCA Takedown Request
           </p>
         </section>
       </div>

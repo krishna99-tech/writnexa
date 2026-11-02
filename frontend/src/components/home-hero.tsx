@@ -64,10 +64,10 @@ export function HomeHero({ categories }: HomeHeroProps) {
                 <span>Write Article</span>
               </Button>
             </Link>
-            <Link href="/studio">
+            <Link href="/dashboard">
               <Button variant="outline" className="border-zinc-700 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 gap-2 font-mono text-xs">
                 <LayoutDashboard className="w-3.5 h-3.5" />
-                <span>Author Studio</span>
+                <span>Author Workspace</span>
               </Button>
             </Link>
             {isAdmin && (
@@ -170,7 +170,7 @@ export function HomeHero({ categories }: HomeHeroProps) {
             <span>Browse Topics</span>
           </Button>
         </Link>
-        <Link href="/studio">
+        <Link href="/become-author">
           <Button variant="ghost" className="text-zinc-400 hover:text-zinc-100 font-mono text-xs">
             Become an Author &rarr;
           </Button>

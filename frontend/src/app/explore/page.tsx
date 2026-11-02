@@ -75,7 +75,7 @@ export default async function ExplorePage({
         {/* Sort & Category Chips */}
         <div className="flex flex-wrap items-center justify-between gap-4 pt-2 border-t border-zinc-800/60">
           {/* Sorting Tabs */}
-          <div className="flex items-center gap-1.5 text-xs font-mono">
+          <div className="flex flex-wrap items-center gap-1.5 text-xs font-mono">
             <span className="text-zinc-500 mr-1 flex items-center gap-1">
               <SlidersHorizontal className="w-3 h-3" /> Sort:
             </span>

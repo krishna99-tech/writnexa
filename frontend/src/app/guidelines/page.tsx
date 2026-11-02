@@ -1,9 +1,9 @@
-import React from "react";
+﻿import React from "react";
 import Link from "next/link";
 import { Terminal, ShieldAlert, CheckCircle2, XCircle } from "lucide-react";
 
 export const metadata = {
-  title: "Author Guidelines & Community Rules — QUORIX",
+  title: "Author Guidelines & Community Rules — WRITNEXA",
   description: "Editorial quality standards, code verification criteria, and community conduct.",
 };
 
@@ -19,7 +19,7 @@ export default function GuidelinesPage() {
           Author Guidelines & Community Rules
         </h1>
         <p className="text-sm text-zinc-400 font-sans leading-relaxed">
-          QUORIX is curated for senior software engineers, architects, and infrastructure specialists. All publications must meet the following standards.
+          WRITNEXA is curated for senior software engineers, architects, and infrastructure specialists. All publications must meet the following standards.
         </p>
       </div>
 

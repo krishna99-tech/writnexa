@@ -1,6 +1,6 @@
-"use client";
+﻿"use client";
 
-import React, { useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
@@ -21,6 +21,8 @@ import {
   BarChart3,
   Megaphone,
   Activity,
+  Menu,
+  X,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -42,6 +44,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const pathname = usePathname();
   const router = useRouter();
   const { user, profile, isLoading } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
 
   // Role authorization:
   // - Admin and Super Admin have access to the entire admin center.
@@ -86,7 +93,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           Access Restricted
         </h1>
         <p className="text-sm text-zinc-400 font-sans">
-          You do not have administrative privileges to access the QUORIX Super Admin Center.
+          You do not have administrative privileges to access the WRITNEXA Super Admin Center.
         </p>
         <Link href="/">
           <Button variant="outline" className="font-mono text-xs border-zinc-800">
@@ -98,17 +105,68 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col md:flex-row border-t border-zinc-800/80">
-      {/* Admin Sidebar */}
-      <aside className="w-full md:w-64 border-r border-zinc-800/80 p-5 space-y-6 shrink-0 bg-zinc-950/40">
-        <div className="space-y-2">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-1.5 text-xs font-mono text-zinc-500 hover:text-emerald-400 transition-colors"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Return to App</span>
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col md:flex-row">
+      {/* Mobile Top Header */}
+      <header className="md:hidden border-b border-zinc-800/80 bg-zinc-950/90 backdrop-blur px-4 h-14 flex items-center justify-between sticky top-0 z-40">
+        <div className="flex items-center gap-2">
+          <Link href="/admin" className="flex items-center gap-2">
+            <Shield className="w-5 h-5 text-amber-400" />
+            <span className="font-mono font-bold text-sm tracking-tight">Admin Center</span>
           </Link>
+          <Badge
+            variant={user?.role === "super_admin" ? "default" : "secondary"}
+            className="text-[10px] font-mono capitalize py-0"
+          >
+            {user?.role}
+          </Badge>
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="h-8 w-8 p-0 text-zinc-400 hover:text-zinc-100"
+            aria-label="Toggle admin navigation menu"
+          >
+            {mobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+          </Button>
+        </div>
+      </header>
+
+      {/* Backdrop overlay for mobile drawer */}
+      {mobileMenuOpen && (
+        <div
+          className="fixed inset-0 bg-black/60 z-40 md:hidden backdrop-blur-sm"
+          onClick={() => setMobileMenuOpen(false)}
+        />
+      )}
+
+      {/* Admin Sidebar (Slide-in Drawer on mobile, Fixed Sidebar on desktop) */}
+      <aside
+        className={`fixed top-0 bottom-0 left-0 z-50 w-72 md:static md:w-64 border-r border-zinc-800/80 p-5 space-y-6 shrink-0 bg-zinc-950 md:bg-zinc-950/40 transition-transform duration-200 overflow-y-auto ${
+          mobileMenuOpen ? "translate-x-0 shadow-2xl" : "-translate-x-full md:translate-x-0"
+        }`}
+      >
+        <div className="space-y-2">
+          <div className="flex items-center justify-between">
+            <Link
+              href="/"
+              className="inline-flex items-center gap-1.5 text-xs font-mono text-zinc-500 hover:text-emerald-400 transition-colors"
+            >
+              <ArrowLeft className="w-3.5 h-3.5" />
+              <span>Return to App</span>
+            </Link>
+            {/* Close button inside mobile drawer */}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setMobileMenuOpen(false)}
+              className="md:hidden h-6 w-6 p-0 text-zinc-500 hover:text-zinc-300"
+            >
+              <X className="w-3.5 h-3.5" />
+            </Button>
+          </div>
+
           <div className="flex items-center justify-between pt-1">
             <div className="flex items-center gap-2">
               <Shield className="w-5 h-5 text-amber-400" />
@@ -155,7 +213,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </aside>
 
       {/* Main Admin Area */}
-      <main className="flex-1 p-6 sm:p-10 min-w-0 max-w-7xl mx-auto space-y-8">
+      <main className="flex-1 p-4 sm:p-6 lg:p-10 min-w-0 max-w-7xl mx-auto space-y-8 w-full">
         {children}
       </main>
     </div>

@@ -2135,3 +2135,188 @@ export async function retryAllFailedJobs(
     };
   }
 }
+
+// ============================================================================
+// CREATOR MONETIZATION & LIVE TELEMETRY API
+// ============================================================================
+
+export interface SponsorshipItem {
+  id: string;
+  donor_name: string;
+  amount_cents: number;
+  currency: string;
+  tier_name: string;
+  message?: string;
+  is_anonymous: boolean;
+  created_at: string;
+}
+
+export interface AuthorSponsorshipsData {
+  total_sponsors: number;
+  total_raised_cents: number;
+  sponsorships: SponsorshipItem[];
+}
+
+export interface AuthorEarningsData {
+  balance_cents: number;
+  total_earned_cents: number;
+  pending_payout_cents: number;
+  total_sponsors: number;
+  recent_transactions: SponsorshipItem[];
+}
+
+export interface CreateSponsorshipInput {
+  amount_cents: number;
+  currency?: string;
+  tier_name?: string;
+  donor_name?: string;
+  donor_email?: string;
+  message?: string;
+  is_anonymous?: boolean;
+  article_id?: string;
+}
+
+export interface LiveTelemetryData {
+  article_slug: string;
+  active_readers_now: number;
+  avg_scroll_depth_percent: number;
+}
+
+export interface PeerReviewItem {
+  id: string;
+  reviewer_name: string;
+  reviewer_username: string;
+  reviewer_avatar_url?: string | null;
+  status: "approved" | "pending" | "changes_requested";
+  verdict_summary: string;
+  code_benchmarks_verified: boolean;
+  created_at: string;
+}
+
+export async function fetchAuthorSponsorships(
+  username: string
+): Promise<ApiResponse<AuthorSponsorshipsData>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/authors/${username}/sponsorships`, {
+      cache: "no-store",
+    });
+    return await res.json();
+  } catch (error: any) {
+    return {
+      success: false,
+      error: { code: "FETCH_FAILED", message: error?.message || "Failed to load sponsorships" },
+    };
+  }
+}
+
+export async function createAuthorSponsorship(
+  username: string,
+  input: CreateSponsorshipInput,
+  token?: string
+): Promise<ApiResponse<{ id: string; message: string; created_at: string }>> {
+  try {
+    const headers: Record<string, string> = { "Content-Type": "application/json" };
+    if (token) {
+      headers["Authorization"] = `Bearer ${token}`;
+    }
+    const res = await fetch(`${API_BASE_URL}/api/v1/authors/${username}/sponsorships`, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(input),
+    });
+    return await res.json();
+  } catch (error: any) {
+    return {
+      success: false,
+      error: { code: "SPONSORSHIP_FAILED", message: error?.message || "Failed to process sponsorship" },
+    };
+  }
+}
+
+export async function fetchAuthorEarnings(
+  token: string
+): Promise<ApiResponse<AuthorEarningsData>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/dashboard/monetization`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    return await res.json();
+  } catch (error: any) {
+    return {
+      success: false,
+      error: { code: "FETCH_FAILED", message: error?.message || "Failed to load author earnings" },
+    };
+  }
+}
+
+export async function sendReadingHeartbeat(
+  slug: string,
+  visitorHash: string,
+  scrollDepth: number
+): Promise<void> {
+  try {
+    await fetch(`${API_BASE_URL}/api/v1/articles/${slug}/heartbeat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ visitor_hash: visitorHash, scroll_depth: scrollDepth }),
+    });
+  } catch {
+    // Silent fail for non-blocking telemetry
+  }
+}
+
+export async function fetchLiveTelemetry(
+  slug: string
+): Promise<ApiResponse<LiveTelemetryData>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/articles/${slug}/live-telemetry`, {
+      cache: "no-store",
+    });
+    return await res.json();
+  } catch (error: any) {
+    return {
+      success: false,
+      error: { code: "FETCH_FAILED", message: error?.message || "Failed to load live telemetry" },
+    };
+  }
+}
+
+export async function fetchPeerReviews(
+  slug: string
+): Promise<ApiResponse<{ reviews: PeerReviewItem[] }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/articles/${slug}/peer-reviews`, {
+      cache: "no-store",
+    });
+    return await res.json();
+  } catch (error: any) {
+    return {
+      success: false,
+      error: { code: "FETCH_FAILED", message: error?.message || "Failed to load peer reviews" },
+    };
+  }
+}
+
+export async function submitPeerReview(
+  slug: string,
+  input: { status: string; verdict_summary: string; code_benchmarks_verified: boolean },
+  token: string
+): Promise<ApiResponse<PeerReviewItem>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/articles/${slug}/peer-reviews`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify(input),
+    });
+    return await res.json();
+  } catch (error: any) {
+    return {
+      success: false,
+      error: { code: "SUBMIT_FAILED", message: error?.message || "Failed to submit peer review" },
+    };
+  }
+}

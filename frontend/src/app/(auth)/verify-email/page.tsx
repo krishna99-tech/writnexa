@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import React, { useState, useEffect, Suspense, useCallback } from "react";
 import Link from "next/link";
@@ -92,7 +92,7 @@ function VerifyEmailContent() {
       <CardHeader className="space-y-1">
         <div className="flex items-center gap-2 text-emerald-400 font-mono text-xs">
           <Terminal className="w-4 h-4" />
-          <span>email_verification // auth.quorix.io</span>
+          <span>email_verification // auth.writnexa.dev</span>
         </div>
         <CardTitle className="text-2xl font-bold tracking-tight text-zinc-100">
           Verify Email Address
@@ -208,7 +208,7 @@ export default function VerifyEmailPage() {
       quote={{
         text: "Verifying developer identities maintains signal quality, blocks spam vectors, and protects genuine engineering discourse.",
         author: "DevOps & Moderation",
-        role: "QUORIX Trust & Safety",
+        role: "WRITNEXA Trust & Safety",
       }}
     >
       <Suspense fallback={<div className="text-center font-mono text-zinc-500">Loading verification...</div>}>

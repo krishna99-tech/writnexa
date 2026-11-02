@@ -1,10 +1,10 @@
-import React from "react";
+﻿import React from "react";
 import Link from "next/link";
 import { Mail, MessageSquare, Terminal, Github, Twitter, MapPin } from "lucide-react";
 
 export const metadata = {
-  title: "Contact & Platform Support — QUORIX",
-  description: "Get in touch with the QUORIX infrastructure and engineering support team.",
+  title: "Contact & Platform Support — WRITNEXA",
+  description: "Get in touch with the WRITNEXA infrastructure and engineering support team.",
 };
 
 export default function ContactPage() {
@@ -31,10 +31,10 @@ export default function ContactPage() {
             For general platform inquiries, author verification, and support:
           </p>
           <a
-            href="mailto:support@quorix.io"
+            href="mailto:support@writnexa.dev"
             className="text-xs font-mono text-emerald-400 hover:underline block pt-1"
           >
-            support@quorix.io
+            support@writnexa.dev
           </a>
         </div>
 
@@ -59,12 +59,12 @@ export default function ContactPage() {
             Report bugs, documentation improvements, and platform feature requests:
           </p>
           <a
-            href="https://github.com/quorix-platform"
+            href="https://github.com/writnexa-platform"
             target="_blank"
             rel="noreferrer"
             className="text-xs font-mono text-emerald-400 hover:underline block pt-1"
           >
-            github.com/quorix-platform &rarr;
+            github.com/writnexa-platform &rarr;
           </a>
         </div>
 
@@ -75,10 +75,10 @@ export default function ContactPage() {
             Found a potential security issue? We operate a responsible disclosure program:
           </p>
           <a
-            href="mailto:security@quorix.io"
+            href="mailto:security@writnexa.dev"
             className="text-xs font-mono text-emerald-400 hover:underline block pt-1"
           >
-            security@quorix.io
+            security@writnexa.dev
           </a>
         </div>
       </div>

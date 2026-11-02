@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { fetchTag, fetchArticles } from "@/lib/api";
@@ -15,13 +15,13 @@ export async function generateMetadata({
   const { slug } = await params;
   const res = await fetchTag(slug);
   if (!res.success || !res.data?.tag) {
-    return { title: "Tag Not Found | QUORIX" };
+    return { title: "Tag Not Found | WRITNEXA" };
   }
 
   const tag = res.data.tag;
   return {
-    title: `#${tag.name} — Technical Articles | QUORIX`,
-    description: tag.description || `Read engineering essays tagged with #${tag.name} on QUORIX.`,
+    title: `#${tag.name} — Technical Articles | WRITNEXA`,
+    description: tag.description || `Read engineering essays tagged with #${tag.name} on WRITNEXA.`,
   };
 }
 

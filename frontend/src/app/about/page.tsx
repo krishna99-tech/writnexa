@@ -1,10 +1,10 @@
-import React from "react";
+﻿import React from "react";
 import Link from "next/link";
 import { Terminal, Shield, Cpu, Database, BookOpen, ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 export const metadata = {
-  title: "About Us — QUORIX Platform",
+  title: "About Us — WRITNEXA Platform",
   description: "The engineering-first publishing ecosystem for software architects and systems builders.",
 };
 
@@ -14,13 +14,13 @@ export default function AboutPage() {
       <div className="space-y-4">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-mono">
           <Terminal className="w-3.5 h-3.5" />
-          <span>ABOUT QUORIX // ARCHITECTURE & MISSION</span>
+          <span>ABOUT WRITNEXA // ARCHITECTURE & MISSION</span>
         </div>
         <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-zinc-100">
           Built for Software Architects Who Build Production Systems
         </h1>
         <p className="text-lg text-zinc-400 font-sans leading-relaxed">
-          The modern tech web is flooded with generic AI-generated listicles and paywalls. QUORIX was created to be the antidote: a high-fidelity publishing ecosystem where software engineers publish verifiable systems knowledge, flamegraphs, and benchmarks.
+          The modern tech web is flooded with generic AI-generated listicles and paywalls. WRITNEXA was created to be the antidote: a high-fidelity publishing ecosystem where software engineers publish verifiable systems knowledge, flamegraphs, and benchmarks.
         </p>
       </div>
 

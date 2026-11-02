@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { subscribeNewsletter, unsubscribeNewsletter } from "@/lib/api";
 import { AdPlacement } from "./ad-placement";
+import { WritnexaLogo } from "./writnexa-logo";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import {
@@ -62,10 +63,8 @@ function MinimalFooter() {
     <footer className="w-full border-t border-zinc-800/60 bg-zinc-950/80 backdrop-blur py-6 text-xs text-zinc-500 font-mono mt-auto">
       <div className="container mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-2">
-          <div className="w-5 h-5 rounded bg-zinc-900 border border-zinc-700 flex items-center justify-center font-bold text-emerald-400 text-[10px]">
-            Q/
-          </div>
-          <span>&copy; {new Date().getFullYear()} QUORIX Inc. All rights reserved.</span>
+          <WritnexaLogo variant="icon" size="xs" />
+          <span>&copy; {new Date().getFullYear()} WRITNEXA Inc. All rights reserved.</span>
         </div>
 
         <nav className="flex flex-wrap items-center gap-5 text-zinc-400">
@@ -153,17 +152,7 @@ function GlobalFooter() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-10">
           {/* Brand Info & Mission (2 Cols) */}
           <div className="lg:col-span-2 space-y-4">
-            <Link href="/" className="inline-flex items-center gap-2 group">
-              <div className="w-8 h-8 rounded bg-zinc-900 border border-zinc-700 flex items-center justify-center font-mono font-bold text-emerald-400 group-hover:border-emerald-500 transition-colors">
-                Q/
-              </div>
-              <span className="font-mono font-bold tracking-tight text-xl text-zinc-100">
-                QUORIX
-              </span>
-              <span className="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-zinc-800 text-emerald-400 border border-zinc-700">
-                v1.0-alpha
-              </span>
-            </Link>
+            <WritnexaLogo variant="full" size="md" href="/" showVersion />
 
             <p className="text-sm text-zinc-400 font-sans leading-relaxed max-w-sm">
               The high-fidelity developer publishing ecosystem for software architects, systems engineers, and open-source practitioners. Pure engineering deep dives with zero clickbait.
@@ -172,7 +161,7 @@ function GlobalFooter() {
             {/* Social Media Links */}
             <div className="flex items-center gap-3 pt-2">
               <a
-                href="https://github.com/quorix-platform"
+                href="https://github.com/writnexa-platform"
                 target="_blank"
                 rel="noreferrer"
                 aria-label="GitHub Repository"
@@ -181,7 +170,7 @@ function GlobalFooter() {
                 <Github className="w-4 h-4" />
               </a>
               <a
-                href="https://twitter.com/quorix_io"
+                href="https://twitter.com/writnexa_dev"
                 target="_blank"
                 rel="noreferrer"
                 aria-label="X / Twitter"
@@ -190,7 +179,7 @@ function GlobalFooter() {
                 <Twitter className="w-4 h-4" />
               </a>
               <a
-                href="https://linkedin.com/company/quorix"
+                href="https://linkedin.com/company/writnexa-platform"
                 target="_blank"
                 rel="noreferrer"
                 aria-label="LinkedIn Profile"
@@ -252,12 +241,12 @@ function GlobalFooter() {
                 </Link>
               </li>
               <li>
-                <Link href="/studio" className="hover:text-emerald-400 transition-colors">
+                <Link href="/guidelines" className="hover:text-emerald-400 transition-colors">
                   Author Guidelines
                 </Link>
               </li>
               <li>
-                <Link href="/studio" className="hover:text-emerald-400 transition-colors">
+                <Link href="/help" className="hover:text-emerald-400 transition-colors">
                   Publishing Help
                 </Link>
               </li>
@@ -406,7 +395,7 @@ function GlobalFooter() {
         <div className="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <Terminal className="w-4 h-4 text-emerald-400" />
-            <span>&copy; {new Date().getFullYear()} QUORIX Platform Inc. Production-grade software architecture ecosystem.</span>
+            <span>&copy; {new Date().getFullYear()} WRITNEXA Platform Inc. Production-grade software architecture ecosystem.</span>
           </div>
 
           <div className="flex flex-wrap items-center gap-5 text-zinc-400 text-[11px]">

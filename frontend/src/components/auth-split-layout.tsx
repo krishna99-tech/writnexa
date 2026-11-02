@@ -2,6 +2,7 @@
 
 import React from "react";
 import Link from "next/link";
+import { WritnexaLogo } from "@/components/writnexa-logo";
 import {
   Terminal,
   Shield,
@@ -43,7 +44,7 @@ export function AuthSplitLayout({
   pageType,
   title,
   description,
-  badge = "QUORIX Auth",
+  badge = "WRITNEXA Auth",
   quote,
   children,
 }: AuthSplitLayoutProps) {
@@ -52,7 +53,7 @@ export function AuthSplitLayout({
       {/* ===================================================================== */}
       {/* LEFT PANEL: Rich Developer Visuals, Illustration & Brand Manifesto   */}
       {/* ===================================================================== */}
-      <div className="relative w-full lg:w-[48%] xl:w-[50%] p-6 sm:p-10 lg:p-12 flex flex-col justify-between overflow-hidden border-b lg:border-b-0 lg:border-r border-zinc-800/80 bg-gradient-to-br from-zinc-950 via-zinc-900/90 to-zinc-950 shrink-0">
+      <div className="relative w-full lg:w-[48%] xl:w-[50%] p-4 sm:p-6 lg:p-12 flex flex-col justify-between overflow-hidden border-b lg:border-b-0 lg:border-r border-zinc-800/80 bg-gradient-to-br from-zinc-950 via-zinc-900/90 to-zinc-950 shrink-0">
         {/* Subtle Ambient Glowing Gradients */}
         <div className="absolute -top-40 -left-40 w-96 h-96 rounded-full bg-emerald-500/10 blur-3xl pointer-events-none" />
         <div className="absolute top-1/2 -right-40 w-96 h-96 rounded-full bg-cyan-500/10 blur-3xl pointer-events-none" />
@@ -69,31 +70,20 @@ export function AuthSplitLayout({
 
         {/* Top: Brand Header & Platform Return Link */}
         <div className="relative z-10 flex items-center justify-between gap-4">
-          <Link href="/" className="flex items-center gap-2.5 group">
-            <div className="w-9 h-9 rounded-xl bg-zinc-900 border border-zinc-700/80 flex items-center justify-center font-mono font-bold text-emerald-400 group-hover:border-emerald-500 transition-colors shadow-lg shadow-emerald-950/20">
-              Q/
-            </div>
-            <div className="flex flex-col">
-              <span className="font-mono font-bold text-base tracking-tight text-zinc-100">
-                QUORIX
-              </span>
-              <span className="text-[10px] font-mono uppercase tracking-wider text-emerald-400">
-                Developer Publishing
-              </span>
-            </div>
-          </Link>
+          <WritnexaLogo variant="full" size="md" href="/" />
 
           <Link
             href="/explore"
             className="flex items-center gap-1.5 text-xs font-mono text-zinc-400 hover:text-emerald-400 transition-colors py-1.5 px-3 rounded-lg hover:bg-zinc-900/60 border border-transparent hover:border-zinc-800"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Explore Articles</span>
+            <span className="hidden sm:inline">Explore Articles</span>
+            <span className="sm:hidden">Explore</span>
           </Link>
         </div>
 
-        {/* Middle: Page-Specific Illustration & Feature Showcase */}
-        <div className="relative z-10 my-8 sm:my-12 space-y-6">
+        {/* Middle: Page-Specific Illustration & Feature Showcase (Desktop and large tablet) */}
+        <div className="hidden lg:block relative z-10 my-8 sm:my-12 space-y-6">
           <div className="space-y-3">
             <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-950/60 border border-emerald-800/80 text-emerald-400 font-mono text-[11px] shadow-sm">
               <Sparkles className="w-3 h-3" />
@@ -118,8 +108,8 @@ export function AuthSplitLayout({
           </div>
         </div>
 
-        {/* Bottom: Engineering Endorsement / Assurance Quote */}
-        <div className="relative z-10 pt-6 border-t border-zinc-800/60 font-mono text-xs">
+        {/* Bottom: Engineering Endorsement / Assurance Quote (Desktop only) */}
+        <div className="hidden lg:block relative z-10 pt-6 border-t border-zinc-800/60 font-mono text-xs">
           {quote ? (
             <div className="space-y-1.5">
               <p className="text-zinc-300 italic font-sans text-xs">
@@ -149,7 +139,7 @@ export function AuthSplitLayout({
       {/* ===================================================================== */}
       {/* RIGHT PANEL: The Active Form Surface                                  */}
       {/* ===================================================================== */}
-      <div className="flex-1 flex flex-col justify-between p-6 sm:p-10 lg:p-12 xl:p-16 relative bg-zinc-950">
+      <div className="flex-1 flex flex-col justify-between p-4 sm:p-8 lg:p-12 xl:p-16 relative bg-zinc-950 min-h-[calc(100vh-64px)] lg:min-h-screen">
         <div className="w-full max-w-md mx-auto my-auto py-4">
           {children}
         </div>
@@ -157,7 +147,7 @@ export function AuthSplitLayout({
         {/* Right Panel Clean Footer Links */}
         <footer className="w-full max-w-md mx-auto pt-8 border-t border-zinc-800/60 flex flex-col sm:flex-row items-center justify-between gap-3 text-[11px] font-mono text-zinc-500">
           <div className="flex items-center gap-1.5">
-            <span>&copy; {new Date().getFullYear()} QUORIX Inc.</span>
+            <span>&copy; {new Date().getFullYear()} WRITNEXA Inc.</span>
           </div>
           <nav className="flex items-center gap-4 text-zinc-400">
             <Link href="/legal/privacy" className="hover:text-emerald-400 transition-colors">
