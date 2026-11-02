@@ -84,6 +84,21 @@ func (h *Handler) GetArticle(c *gin.Context) {
 }
 
 // ListFeatured handles GET /api/v1/articles/featured
+
+// GetArticleSeries handles GET /api/v1/articles/:slug/series
+func (h *Handler) GetArticleSeries(c *gin.Context) {
+	slug := c.Param("slug")
+	series, err := h.svc.GetArticleSeries(c.Request.Context(), slug)
+	if err != nil {
+		response.Error(c, http.StatusInternalServerError, "FETCH_SERIES_FAILED", err.Error())
+		return
+	}
+
+	response.JSON(c, http.StatusOK, gin.H{
+		"series": series,
+	})
+}
+
 func (h *Handler) ListFeatured(c *gin.Context) {
 	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "6"))
 	articles, err := h.svc.ListFeaturedArticles(c.Request.Context(), limit)

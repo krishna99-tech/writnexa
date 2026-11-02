@@ -256,6 +256,20 @@ function ToolbarButton({
   );
 }
 
+
+const getHeadingText = (node: any): string => {
+  if (typeof node === "string") return node;
+  if (Array.isArray(node)) return node.map(getHeadingText).join("");
+  if (node?.props?.children) return getHeadingText(node.props.children);
+  return "";
+};
+
+const slugifyHeading = (text: string) =>
+  text
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
+
 export function MarkdownRenderer({ content }: { content: string }) {
   return (
     <div className="prose prose-invert prose-zinc max-w-none text-zinc-300 space-y-4">
@@ -263,21 +277,32 @@ export function MarkdownRenderer({ content }: { content: string }) {
         remarkPlugins={[remarkGfm, remarkMath]}
         rehypePlugins={[rehypeHighlight, rehypeKatex]}
         components={{
-          h1: ({ children }) => (
-            <h1 className="text-2xl sm:text-3xl font-extrabold text-zinc-100 mt-6 mb-4 tracking-tight pb-2 border-b border-zinc-800">
-              {children}
-            </h1>
-          ),
-          h2: ({ children }) => (
-            <h2 className="text-xl sm:text-2xl font-bold text-zinc-100 mt-5 mb-3 tracking-tight">
-              {children}
-            </h2>
-          ),
-          h3: ({ children }) => (
-            <h3 className="text-lg font-semibold text-zinc-200 mt-4 mb-2">
-              {children}
-            </h3>
-          ),
+          h1: ({ children }) => {
+            const id = slugifyHeading(getHeadingText(children));
+            return (
+              <h1 id={id} className="scroll-mt-20 text-2xl sm:text-3xl font-extrabold text-zinc-100 mt-6 mb-4 tracking-tight pb-2 border-b border-zinc-800">
+                {children}
+              </h1>
+            );
+          },
+          h2: ({ children }) => {
+            const id = slugifyHeading(getHeadingText(children));
+            return (
+              <h2 id={id} className="scroll-mt-20 text-xl sm:text-2xl font-bold text-zinc-100 mt-6 mb-3 tracking-tight group flex items-center justify-between">
+                <span>{children}</span>
+                <a href={`#${id}`} className="opacity-0 group-hover:opacity-100 text-zinc-500 hover:text-emerald-400 text-sm ml-2 font-mono transition-opacity" title="Direct anchor link">#</a>
+              </h2>
+            );
+          },
+          h3: ({ children }) => {
+            const id = slugifyHeading(getHeadingText(children));
+            return (
+              <h3 id={id} className="scroll-mt-20 text-lg font-semibold text-zinc-200 mt-4 mb-2 group flex items-center justify-between">
+                <span>{children}</span>
+                <a href={`#${id}`} className="opacity-0 group-hover:opacity-100 text-zinc-500 hover:text-emerald-400 text-sm ml-2 font-mono transition-opacity" title="Direct anchor link">#</a>
+              </h3>
+            );
+          },
           p: ({ children }) => (
             <p className="text-sm sm:text-base leading-relaxed text-zinc-300 my-3">
               {children}

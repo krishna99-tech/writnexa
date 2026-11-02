@@ -1,13 +1,23 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { fetchBookmarks, toggleBookmark, BookmarkedArticle } from "@/lib/api";
-import { ArticleCard } from "@/components/article-card";
 import { Button } from "@/components/ui/button";
-import { Bookmark, Clock, ArrowLeft, Trash2, BookOpen, Compass } from "lucide-react";
+import {
+  Bookmark,
+  Clock,
+  ArrowLeft,
+  Trash2,
+  BookOpen,
+  Compass,
+  Search,
+  Download,
+  Filter,
+  Check,
+} from "lucide-react";
 
 export default function BookmarksPage() {
   const router = useRouter();
@@ -17,12 +27,15 @@ export default function BookmarksPage() {
   const [totalRecords, setTotalRecords] = useState<number>(0);
   const [page, setPage] = useState<number>(1);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeCollection, setActiveCollection] = useState("all");
+  const [copiedExport, setCopiedExport] = useState(false);
 
   const loadBookmarks = useCallback(
     async (p: number) => {
       if (!accessToken) return;
       setIsLoading(true);
-      const res = await fetchBookmarks(accessToken, p, 10);
+      const res = await fetchBookmarks(accessToken, p, 50);
       setIsLoading(false);
       if (res.success && res.data) {
         setBookmarks(res.data.bookmarks || []);
@@ -55,6 +68,62 @@ export default function BookmarksPage() {
     }
   };
 
+  // Filtered bookmarks by search and collection
+  const filteredBookmarks = useMemo(() => {
+    return bookmarks.filter((b) => {
+      const matchQuery =
+        !searchQuery ||
+        b.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (b.subtitle && b.subtitle.toLowerCase().includes(searchQuery.toLowerCase())) ||
+        b.author.display_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        b.author.username.toLowerCase().includes(searchQuery.toLowerCase());
+
+      if (!matchQuery) return false;
+
+      if (activeCollection === "all") return true;
+      if (activeCollection === "databases") {
+        return b.title.toLowerCase().includes("sql") || b.title.toLowerCase().includes("database") || b.title.toLowerCase().includes("postgres");
+      }
+      if (activeCollection === "systems") {
+        return b.title.toLowerCase().includes("go") || b.title.toLowerCase().includes("rust") || b.title.toLowerCase().includes("concurrency");
+      }
+      if (activeCollection === "kernel") {
+        return b.title.toLowerCase().includes("kernel") || b.title.toLowerCase().includes("ebpf") || b.title.toLowerCase().includes("linux");
+      }
+      if (activeCollection === "quick") {
+        return b.reading_time_minutes <= 7;
+      }
+      return true;
+    });
+  }, [bookmarks, searchQuery, activeCollection]);
+
+  // Total read time calculation
+  const totalReadMinutes = useMemo(() => {
+    return bookmarks.reduce((acc, curr) => acc + (curr.reading_time_minutes || 0), 0);
+  }, [bookmarks]);
+
+  // Export Reading List as Markdown
+  const handleExportMarkdown = () => {
+    const lines = [
+      "# My WRITNEXA Reading List",
+      `Exported on ${new Date().toLocaleDateString()}`,
+      "",
+      ...bookmarks.map(
+        (b, idx) =>
+          `${idx + 1}. [${b.title}](https://writnexa.dev/article/${b.slug}) by @${b.author.username} (${b.reading_time_minutes} min read)`
+      ),
+    ];
+    const blob = new Blob([lines.join("\n")], { type: "text/markdown" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `writnexa-reading-list-${new Date().toISOString().split("T")[0]}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setCopiedExport(true);
+    setTimeout(() => setCopiedExport(false), 2000);
+  };
+
   if (authLoading) {
     return (
       <div className="container max-w-4xl mx-auto px-4 py-16 space-y-4">
@@ -85,17 +154,81 @@ export default function BookmarksPage() {
             <span>reading_list // bookmarks_library</span>
           </div>
           <h1 className="text-3xl font-extrabold text-zinc-100">
-            Saved Bookmarks
+            Reading Lists & Collections
           </h1>
           <p className="text-sm text-zinc-400 font-sans">
-            Articles and engineering deep dives you have saved for offline study and reference.
+            Technical publications curated for architecture reviews, system designs, and reference study.
           </p>
         </div>
 
-        <div className="text-xs font-mono text-zinc-500 bg-zinc-900 px-3 py-1.5 rounded-lg border border-zinc-800">
-          Total Saved: <strong className="text-zinc-200">{totalRecords}</strong>
+        <div className="flex items-center gap-2">
+          {bookmarks.length > 0 && (
+            <button
+              onClick={handleExportMarkdown}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-700 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 text-xs font-mono transition-colors"
+              title="Download reading list as Markdown file"
+            >
+              {copiedExport ? (
+                <>
+                  <Check className="w-3.5 h-3.5 text-emerald-400" />
+                  <span>Exported!</span>
+                </>
+              ) : (
+                <>
+                  <Download className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Export .md</span>
+                </>
+              )}
+            </button>
+          )}
+
+          <div className="text-xs font-mono text-zinc-400 bg-zinc-900 px-3 py-1.5 rounded-lg border border-zinc-800">
+            <span>{totalRecords} saved</span>
+            <span className="text-zinc-600 mx-1.5">&bull;</span>
+            <span className="text-cyan-400">~{Math.round(totalReadMinutes / 60 * 10) / 10}h study</span>
+          </div>
         </div>
       </div>
+
+      {/* Filter and Search Bar */}
+      {bookmarks.length > 0 && (
+        <div className="space-y-3">
+          {/* Search Input */}
+          <div className="relative">
+            <Search className="w-4 h-4 text-zinc-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              placeholder="Filter your saved technical papers by title, author, or keyword..."
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl border border-zinc-800 bg-zinc-900/60 text-xs font-mono text-zinc-200 placeholder:text-zinc-600 focus:outline-none focus:border-cyan-500 transition-colors"
+            />
+          </div>
+
+          {/* Collection Filter Tabs */}
+          <div className="flex flex-wrap items-center gap-1.5 text-xs font-mono">
+            {[
+              { id: "all", label: "All Papers" },
+              { id: "databases", label: "Databases & Storage" },
+              { id: "systems", label: "Go & Systems" },
+              { id: "kernel", label: "Linux & eBPF" },
+              { id: "quick", label: "< 7m Quick Reads" },
+            ].map((col) => (
+              <button
+                key={col.id}
+                onClick={() => setActiveCollection(col.id)}
+                className={`px-3 py-1.5 rounded-lg border transition-colors ${
+                  activeCollection === col.id
+                    ? "bg-cyan-950/60 border-cyan-500 text-cyan-300 font-semibold"
+                    : "border-zinc-800 bg-zinc-900/40 text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60"
+                }`}
+              >
+                {col.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Bookmarks Listing */}
       {isLoading ? (
@@ -130,9 +263,22 @@ export default function BookmarksPage() {
             </Button>
           </Link>
         </div>
+      ) : filteredBookmarks.length === 0 ? (
+        <div className="text-center py-12 rounded-xl border border-zinc-800/80 bg-zinc-900/20 text-zinc-500 text-xs font-mono space-y-2">
+          <p>No saved articles match your current filter query.</p>
+          <button
+            onClick={() => {
+              setSearchQuery("");
+              setActiveCollection("all");
+            }}
+            className="text-cyan-400 hover:underline"
+          >
+            Clear active filters
+          </button>
+        </div>
       ) : (
         <div className="space-y-4">
-          {bookmarks.map((b) => (
+          {filteredBookmarks.map((b) => (
             <div
               key={b.id}
               className="group p-5 rounded-xl border border-zinc-800 bg-zinc-900/40 hover:border-zinc-700 transition-all space-y-3"
@@ -158,7 +304,7 @@ export default function BookmarksPage() {
                   </div>
 
                   <Link href={`/article/${b.slug}`}>
-                    <h2 className="text-lg font-bold text-zinc-100 group-hover:text-emerald-400 transition-colors">
+                    <h2 className="text-lg font-bold text-zinc-100 group-hover:text-cyan-400 transition-colors">
                       {b.title}
                     </h2>
                   </Link>
@@ -188,4 +334,3 @@ export default function BookmarksPage() {
     </div>
   );
 }
-

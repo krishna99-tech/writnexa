@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState, Suspense } from "react";
 import Link from "next/link";
@@ -142,17 +142,14 @@ function LoginForm() {
         <CardFooter className="flex flex-col gap-4 border-t border-zinc-800/60 pt-4">
           <Button
             type="submit"
-            disabled={isSubmitting}
+            isLoading={isSubmitting}
+            loadingText="Authenticating..."
             className="w-full bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-semibold"
           >
-            {isSubmitting ? (
-              "Authenticating..."
-            ) : (
-              <span className="flex items-center justify-center gap-1.5">
-                <span>Sign In</span>
-                <ArrowRight className="w-4 h-4" />
-              </span>
-            )}
+            <span className="flex items-center justify-center gap-1.5">
+              <span>Sign In</span>
+              <ArrowRight className="w-4 h-4" />
+            </span>
           </Button>
 
           <div className="text-xs text-zinc-400 text-center font-mono">

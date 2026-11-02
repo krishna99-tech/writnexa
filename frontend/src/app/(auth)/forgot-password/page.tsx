@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import React, { useState } from "react";
 import Link from "next/link";
@@ -126,10 +126,11 @@ export default function ForgotPasswordPage() {
             <CardFooter className="flex flex-col gap-4 border-t border-zinc-800/60 pt-4">
               <Button
                 type="submit"
-                disabled={isSubmitting}
+                isLoading={isSubmitting}
+                loadingText="Dispatching Link..."
                 className="w-full bg-emerald-600 hover:bg-emerald-500 text-zinc-950 font-semibold"
               >
-                {isSubmitting ? "Dispatching..." : "Send Reset Link"}
+                Send Reset Link
               </Button>
 
               <div className="text-xs text-zinc-400 text-center font-mono">

@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Terminal } from "lucide-react";
 import { AuthProvider } from "@/lib/auth-context";
 import { ThemeProvider } from "@/lib/theme-context";
 import { Navbar } from "@/components/navbar";
 import { Footer } from "@/components/footer";
+import { RouteProgressBar } from "@/components/route-progress-bar";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -52,6 +54,9 @@ export default function RootLayout({
         />
       </head>
       <body className="min-h-screen flex flex-col bg-background text-foreground font-sans transition-colors duration-150">
+        <Suspense fallback={null}>
+          <RouteProgressBar />
+        </Suspense>
         <ThemeProvider>
           <AuthProvider>
             {/* Sleek Developer Header with Session Context */}

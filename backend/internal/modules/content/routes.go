@@ -15,6 +15,7 @@ func RegisterRoutes(r *gin.RouterGroup, h *Handler, cfg *config.Config) {
 	r.GET("/articles/featured", h.ListFeatured)
 	r.GET("/articles/trending", h.ListTrending)
 	r.GET("/articles/:slug", h.GetArticle)
+	r.GET("/articles/:slug/series", h.GetArticleSeries)
 
 	// Topics / Categories
 	r.GET("/categories", h.ListCategories)

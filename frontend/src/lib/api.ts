@@ -63,6 +63,27 @@ export interface ArticleDetail extends ArticleSummary {
   canonical_url?: string | null;
 }
 
+export interface SeriesItem {
+  order_index: number;
+  article_id: string;
+  title: string;
+  slug: string;
+  reading_time_minutes: number;
+  is_current?: boolean;
+}
+
+export interface ArticleSeriesDetail {
+  id: string;
+  title: string;
+  slug: string;
+  description: string;
+  total_parts: number;
+  current_part: number;
+  prev_article?: SeriesItem;
+  next_article?: SeriesItem;
+  items: SeriesItem[];
+}
+
 export interface Category {
   id: string;
   name: string;
@@ -267,6 +288,20 @@ export async function fetchArticle(slug: string): Promise<ApiResponse<{ article:
     return {
       success: false,
       error: { code: "FETCH_FAILED", message: error?.message || "Failed to load article" },
+    };
+  }
+}
+
+export async function fetchArticleSeries(slug: string): Promise<ApiResponse<{ series: ArticleSeriesDetail | null }>> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/v1/articles/${slug}/series`, {
+      next: { revalidate: 60 },
+    });
+    return await res.json();
+  } catch (error: any) {
+    return {
+      success: false,
+      error: { code: "FETCH_FAILED", message: error?.message || "Failed to load series" },
     };
   }
 }

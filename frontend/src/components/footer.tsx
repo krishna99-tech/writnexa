@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/lib/auth-context";
 import { subscribeNewsletter, unsubscribeNewsletter } from "@/lib/api";
 import { AdPlacement } from "./ad-placement";
 import { WritnexaLogo } from "./writnexa-logo";
@@ -27,6 +28,12 @@ import {
 
 export function Footer() {
   const pathname = usePathname();
+  const { user } = useAuth();
+
+  // If user or author is logged in, hide footer across the entire application
+  if (user) {
+    return null;
+  }
 
   // 1. Never show footer in Workspace (/dashboard), Studio (/studio), Admin (/admin), or Settings (/settings)
   if (

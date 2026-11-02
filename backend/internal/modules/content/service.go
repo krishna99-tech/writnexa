@@ -65,6 +65,49 @@ type TagRef struct {
 	Slug string `json:"slug"`
 }
 
+type SeriesItem struct {
+	OrderIndex         int    `json:"order_index"`
+	ArticleID          string `json:"article_id"`
+	Title              string `json:"title"`
+	Slug               string `json:"slug"`
+	ReadingTimeMinutes int    `json:"reading_time_minutes"`
+	IsCurrent          bool   `json:"is_current"`
+}
+
+type ArticleSeriesDetail struct {
+	ID          string       `json:"id"`
+	Title       string       `json:"title"`
+	Slug        string       `json:"slug"`
+	Description string       `json:"description"`
+	TotalParts  int          `json:"total_parts"`
+	CurrentPart int          `json:"current_part"`
+	PrevArticle *SeriesItem  `json:"prev_article,omitempty"`
+	NextArticle *SeriesItem  `json:"next_article,omitempty"`
+	Items       []SeriesItem `json:"items"`
+}
+
+
+type SeriesItem struct {
+	OrderIndex         int    `json:"order_index"`
+	ArticleID          string `json:"article_id"`
+	Title              string `json:"title"`
+	Slug               string `json:"slug"`
+	ReadingTimeMinutes int    `json:"reading_time_minutes"`
+	IsCurrent          bool   `json:"is_current"`
+}
+
+type ArticleSeriesDetail struct {
+	ID          string       `json:"id"`
+	Title       string       `json:"title"`
+	Slug        string       `json:"slug"`
+	Description string       `json:"description"`
+	TotalParts  int          `json:"total_parts"`
+	CurrentPart int          `json:"current_part"`
+	PrevArticle *SeriesItem  `json:"prev_article,omitempty"`
+	NextArticle *SeriesItem  `json:"next_article,omitempty"`
+	Items       []SeriesItem `json:"items"`
+}
+
 type AuthorSummary struct {
 	UserID         string    `json:"user_id"`
 	Username       string    `json:"username"`
@@ -125,6 +168,7 @@ type Service interface {
 	GetAuthorProfileByUserID(ctx context.Context, userID uuid.UUID) (*AuthorDetail, error)
 	ListAuthorArticles(ctx context.Context, username string, page, perPage int) ([]ArticleSummary, int64, error)
 	GetAuthorStats(ctx context.Context, username string) (*AuthorStats, error)
+	GetArticleSeries(ctx context.Context, slug string) (*ArticleSeriesDetail, error)
 	UpdateProfile(ctx context.Context, userID uuid.UUID, input UpdateProfileInput) (*AuthorDetail, error)
 }
 
@@ -783,6 +827,83 @@ func mapFeaturedRows(rows []db.ListFeaturedArticlesRow) []ArticleSummary {
 	return list
 }
 
+func (s *service) GetArticleSeries(ctx context.Context, slug string) (*ArticleSeriesDetail, error) {
+	if s.db == nil || s.db.Pool == nil {
+		return nil, errors.New("database not available")
+	}
+
+	var seriesID, title, seriesSlug string
+	var description *string
+
+	findQuery := `
+		SELECT s.id::text, s.title, s.slug, s.description
+		FROM article_series s
+		JOIN article_series_items asi ON s.id = asi.series_id
+		JOIN articles a ON a.id = asi.article_id
+		WHERE a.slug = $1
+		LIMIT 1;
+	`
+	err := s.db.Pool.QueryRow(ctx, findQuery, slug).Scan(&seriesID, &title, &seriesSlug, &description)
+	if err != nil {
+		// Not in any series - normal behavior
+		return nil, nil
+	}
+
+	descStr := ""
+	if description != nil {
+		descStr = *description
+	}
+
+	detail := &ArticleSeriesDetail{
+		ID:          seriesID,
+		Title:       title,
+		Slug:        seriesSlug,
+		Description: descStr,
+		Items:       make([]SeriesItem, 0),
+	}
+
+	itemsQuery := `
+		SELECT asi.order_index, a.id::text, a.title, a.slug, a.reading_time_minutes
+		FROM article_series_items asi
+		JOIN articles a ON a.id = asi.article_id
+		WHERE asi.series_id = $1::uuid
+		ORDER BY asi.order_index ASC;
+	`
+	rows, err := s.db.Pool.Query(ctx, itemsQuery, seriesID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	currentIndex := -1
+	for rows.Next() {
+		var item SeriesItem
+		if err := rows.Scan(&item.OrderIndex, &item.ArticleID, &item.Title, &item.Slug, &item.ReadingTimeMinutes); err != nil {
+			return nil, err
+		}
+		if item.Slug == slug {
+			item.IsCurrent = true
+			currentIndex = len(detail.Items)
+			detail.CurrentPart = item.OrderIndex
+		}
+		detail.Items = append(detail.Items, item)
+	}
+
+	detail.TotalParts = len(detail.Items)
+
+	if currentIndex > 0 {
+		prev := detail.Items[currentIndex-1]
+		detail.PrevArticle = &prev
+	}
+	if currentIndex >= 0 && currentIndex < len(detail.Items)-1 {
+		next := detail.Items[currentIndex+1]
+		detail.NextArticle = &next
+	}
+
+	return detail, nil
+}
+
+
 func mapTrendingRows(rows []db.ListTrendingArticlesRow) []ArticleSummary {
 	var list []ArticleSummary
 	for _, r := range rows {
@@ -827,6 +948,83 @@ func mapTrendingRows(rows []db.ListTrendingArticlesRow) []ArticleSummary {
 	}
 	return list
 }
+
+func (s *service) GetArticleSeries(ctx context.Context, slug string) (*ArticleSeriesDetail, error) {
+	if s.db == nil || s.db.Pool == nil {
+		return nil, errors.New("database not available")
+	}
+
+	var seriesID, title, seriesSlug string
+	var description *string
+
+	findQuery := `
+		SELECT s.id::text, s.title, s.slug, s.description
+		FROM article_series s
+		JOIN article_series_items asi ON s.id = asi.series_id
+		JOIN articles a ON a.id = asi.article_id
+		WHERE a.slug = $1
+		LIMIT 1;
+	`
+	err := s.db.Pool.QueryRow(ctx, findQuery, slug).Scan(&seriesID, &title, &seriesSlug, &description)
+	if err != nil {
+		// Not in any series - normal behavior
+		return nil, nil
+	}
+
+	descStr := ""
+	if description != nil {
+		descStr = *description
+	}
+
+	detail := &ArticleSeriesDetail{
+		ID:          seriesID,
+		Title:       title,
+		Slug:        seriesSlug,
+		Description: descStr,
+		Items:       make([]SeriesItem, 0),
+	}
+
+	itemsQuery := `
+		SELECT asi.order_index, a.id::text, a.title, a.slug, a.reading_time_minutes
+		FROM article_series_items asi
+		JOIN articles a ON a.id = asi.article_id
+		WHERE asi.series_id = $1::uuid
+		ORDER BY asi.order_index ASC;
+	`
+	rows, err := s.db.Pool.Query(ctx, itemsQuery, seriesID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	currentIndex := -1
+	for rows.Next() {
+		var item SeriesItem
+		if err := rows.Scan(&item.OrderIndex, &item.ArticleID, &item.Title, &item.Slug, &item.ReadingTimeMinutes); err != nil {
+			return nil, err
+		}
+		if item.Slug == slug {
+			item.IsCurrent = true
+			currentIndex = len(detail.Items)
+			detail.CurrentPart = item.OrderIndex
+		}
+		detail.Items = append(detail.Items, item)
+	}
+
+	detail.TotalParts = len(detail.Items)
+
+	if currentIndex > 0 {
+		prev := detail.Items[currentIndex-1]
+		detail.PrevArticle = &prev
+	}
+	if currentIndex >= 0 && currentIndex < len(detail.Items)-1 {
+		next := detail.Items[currentIndex+1]
+		detail.NextArticle = &next
+	}
+
+	return detail, nil
+}
+
 
 func mapCategoryRows(rows []db.ListArticlesByCategoryRow) []ArticleSummary {
 	var list []ArticleSummary
@@ -873,6 +1071,83 @@ func mapCategoryRows(rows []db.ListArticlesByCategoryRow) []ArticleSummary {
 	return list
 }
 
+func (s *service) GetArticleSeries(ctx context.Context, slug string) (*ArticleSeriesDetail, error) {
+	if s.db == nil || s.db.Pool == nil {
+		return nil, errors.New("database not available")
+	}
+
+	var seriesID, title, seriesSlug string
+	var description *string
+
+	findQuery := `
+		SELECT s.id::text, s.title, s.slug, s.description
+		FROM article_series s
+		JOIN article_series_items asi ON s.id = asi.series_id
+		JOIN articles a ON a.id = asi.article_id
+		WHERE a.slug = $1
+		LIMIT 1;
+	`
+	err := s.db.Pool.QueryRow(ctx, findQuery, slug).Scan(&seriesID, &title, &seriesSlug, &description)
+	if err != nil {
+		// Not in any series - normal behavior
+		return nil, nil
+	}
+
+	descStr := ""
+	if description != nil {
+		descStr = *description
+	}
+
+	detail := &ArticleSeriesDetail{
+		ID:          seriesID,
+		Title:       title,
+		Slug:        seriesSlug,
+		Description: descStr,
+		Items:       make([]SeriesItem, 0),
+	}
+
+	itemsQuery := `
+		SELECT asi.order_index, a.id::text, a.title, a.slug, a.reading_time_minutes
+		FROM article_series_items asi
+		JOIN articles a ON a.id = asi.article_id
+		WHERE asi.series_id = $1::uuid
+		ORDER BY asi.order_index ASC;
+	`
+	rows, err := s.db.Pool.Query(ctx, itemsQuery, seriesID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	currentIndex := -1
+	for rows.Next() {
+		var item SeriesItem
+		if err := rows.Scan(&item.OrderIndex, &item.ArticleID, &item.Title, &item.Slug, &item.ReadingTimeMinutes); err != nil {
+			return nil, err
+		}
+		if item.Slug == slug {
+			item.IsCurrent = true
+			currentIndex = len(detail.Items)
+			detail.CurrentPart = item.OrderIndex
+		}
+		detail.Items = append(detail.Items, item)
+	}
+
+	detail.TotalParts = len(detail.Items)
+
+	if currentIndex > 0 {
+		prev := detail.Items[currentIndex-1]
+		detail.PrevArticle = &prev
+	}
+	if currentIndex >= 0 && currentIndex < len(detail.Items)-1 {
+		next := detail.Items[currentIndex+1]
+		detail.NextArticle = &next
+	}
+
+	return detail, nil
+}
+
+
 func mapTagRows(rows []db.ListArticlesByTagRow) []ArticleSummary {
 	var list []ArticleSummary
 	for _, r := range rows {
@@ -918,6 +1193,83 @@ func mapTagRows(rows []db.ListArticlesByTagRow) []ArticleSummary {
 	return list
 }
 
+func (s *service) GetArticleSeries(ctx context.Context, slug string) (*ArticleSeriesDetail, error) {
+	if s.db == nil || s.db.Pool == nil {
+		return nil, errors.New("database not available")
+	}
+
+	var seriesID, title, seriesSlug string
+	var description *string
+
+	findQuery := `
+		SELECT s.id::text, s.title, s.slug, s.description
+		FROM article_series s
+		JOIN article_series_items asi ON s.id = asi.series_id
+		JOIN articles a ON a.id = asi.article_id
+		WHERE a.slug = $1
+		LIMIT 1;
+	`
+	err := s.db.Pool.QueryRow(ctx, findQuery, slug).Scan(&seriesID, &title, &seriesSlug, &description)
+	if err != nil {
+		// Not in any series - normal behavior
+		return nil, nil
+	}
+
+	descStr := ""
+	if description != nil {
+		descStr = *description
+	}
+
+	detail := &ArticleSeriesDetail{
+		ID:          seriesID,
+		Title:       title,
+		Slug:        seriesSlug,
+		Description: descStr,
+		Items:       make([]SeriesItem, 0),
+	}
+
+	itemsQuery := `
+		SELECT asi.order_index, a.id::text, a.title, a.slug, a.reading_time_minutes
+		FROM article_series_items asi
+		JOIN articles a ON a.id = asi.article_id
+		WHERE asi.series_id = $1::uuid
+		ORDER BY asi.order_index ASC;
+	`
+	rows, err := s.db.Pool.Query(ctx, itemsQuery, seriesID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	currentIndex := -1
+	for rows.Next() {
+		var item SeriesItem
+		if err := rows.Scan(&item.OrderIndex, &item.ArticleID, &item.Title, &item.Slug, &item.ReadingTimeMinutes); err != nil {
+			return nil, err
+		}
+		if item.Slug == slug {
+			item.IsCurrent = true
+			currentIndex = len(detail.Items)
+			detail.CurrentPart = item.OrderIndex
+		}
+		detail.Items = append(detail.Items, item)
+	}
+
+	detail.TotalParts = len(detail.Items)
+
+	if currentIndex > 0 {
+		prev := detail.Items[currentIndex-1]
+		detail.PrevArticle = &prev
+	}
+	if currentIndex >= 0 && currentIndex < len(detail.Items)-1 {
+		next := detail.Items[currentIndex+1]
+		detail.NextArticle = &next
+	}
+
+	return detail, nil
+}
+
+
 func mapAuthorArticleRows(rows []db.ListArticlesByAuthorRow) []ArticleSummary {
 	var list []ArticleSummary
 	for _, r := range rows {
@@ -962,3 +1314,156 @@ func mapAuthorArticleRows(rows []db.ListArticlesByAuthorRow) []ArticleSummary {
 	}
 	return list
 }
+
+func (s *service) GetArticleSeries(ctx context.Context, slug string) (*ArticleSeriesDetail, error) {
+	if s.db == nil || s.db.Pool == nil {
+		return nil, errors.New("database not available")
+	}
+
+	var seriesID, title, seriesSlug string
+	var description *string
+
+	findQuery := `
+		SELECT s.id::text, s.title, s.slug, s.description
+		FROM article_series s
+		JOIN article_series_items asi ON s.id = asi.series_id
+		JOIN articles a ON a.id = asi.article_id
+		WHERE a.slug = $1
+		LIMIT 1;
+	`
+	err := s.db.Pool.QueryRow(ctx, findQuery, slug).Scan(&seriesID, &title, &seriesSlug, &description)
+	if err != nil {
+		return nil, nil
+	}
+
+	descStr := ""
+	if description != nil {
+		descStr = *description
+	}
+
+	detail := &ArticleSeriesDetail{
+		ID:          seriesID,
+		Title:       title,
+		Slug:        seriesSlug,
+		Description: descStr,
+		Items:       make([]SeriesItem, 0),
+	}
+
+	itemsQuery := `
+		SELECT asi.order_index, a.id::text, a.title, a.slug, a.reading_time_minutes
+		FROM article_series_items asi
+		JOIN articles a ON a.id = asi.article_id
+		WHERE asi.series_id = $1::uuid
+		ORDER BY asi.order_index ASC;
+	`
+	rows, err := s.db.Pool.Query(ctx, itemsQuery, seriesID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	currentIndex := -1
+	for rows.Next() {
+		var item SeriesItem
+		if err := rows.Scan(&item.OrderIndex, &item.ArticleID, &item.Title, &item.Slug, &item.ReadingTimeMinutes); err != nil {
+			return nil, err
+		}
+		if item.Slug == slug {
+			item.IsCurrent = true
+			currentIndex = len(detail.Items)
+			detail.CurrentPart = item.OrderIndex
+		}
+		detail.Items = append(detail.Items, item)
+	}
+
+	detail.TotalParts = len(detail.Items)
+
+	if currentIndex > 0 {
+		prev := detail.Items[currentIndex-1]
+		detail.PrevArticle = &prev
+	}
+	if currentIndex >= 0 && currentIndex < len(detail.Items)-1 {
+		next := detail.Items[currentIndex+1]
+		detail.NextArticle = &next
+	}
+
+	return detail, nil
+}
+
+
+func (s *service) GetArticleSeries(ctx context.Context, slug string) (*ArticleSeriesDetail, error) {
+	if s.db == nil || s.db.Pool == nil {
+		return nil, errors.New("database not available")
+	}
+
+	var seriesID, title, seriesSlug string
+	var description *string
+
+	findQuery := `
+		SELECT s.id::text, s.title, s.slug, s.description
+		FROM article_series s
+		JOIN article_series_items asi ON s.id = asi.series_id
+		JOIN articles a ON a.id = asi.article_id
+		WHERE a.slug = $1
+		LIMIT 1;
+	`
+	err := s.db.Pool.QueryRow(ctx, findQuery, slug).Scan(&seriesID, &title, &seriesSlug, &description)
+	if err != nil {
+		// Not in any series - normal behavior
+		return nil, nil
+	}
+
+	descStr := ""
+	if description != nil {
+		descStr = *description
+	}
+
+	detail := &ArticleSeriesDetail{
+		ID:          seriesID,
+		Title:       title,
+		Slug:        seriesSlug,
+		Description: descStr,
+		Items:       make([]SeriesItem, 0),
+	}
+
+	itemsQuery := `
+		SELECT asi.order_index, a.id::text, a.title, a.slug, a.reading_time_minutes
+		FROM article_series_items asi
+		JOIN articles a ON a.id = asi.article_id
+		WHERE asi.series_id = $1::uuid
+		ORDER BY asi.order_index ASC;
+	`
+	rows, err := s.db.Pool.Query(ctx, itemsQuery, seriesID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	currentIndex := -1
+	for rows.Next() {
+		var item SeriesItem
+		if err := rows.Scan(&item.OrderIndex, &item.ArticleID, &item.Title, &item.Slug, &item.ReadingTimeMinutes); err != nil {
+			return nil, err
+		}
+		if item.Slug == slug {
+			item.IsCurrent = true
+			currentIndex = len(detail.Items)
+			detail.CurrentPart = item.OrderIndex
+		}
+		detail.Items = append(detail.Items, item)
+	}
+
+	detail.TotalParts = len(detail.Items)
+
+	if currentIndex > 0 {
+		prev := detail.Items[currentIndex-1]
+		detail.PrevArticle = &prev
+	}
+	if currentIndex >= 0 && currentIndex < len(detail.Items)-1 {
+		next := detail.Items[currentIndex+1]
+		detail.NextArticle = &next
+	}
+
+	return detail, nil
+}
+

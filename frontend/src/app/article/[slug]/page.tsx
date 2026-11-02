@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { fetchArticle } from "@/lib/api";
+import { fetchArticle, fetchArticleSeries } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -26,6 +26,14 @@ import { AdPlacement } from "@/components/ad-placement";
 import { MarkdownRenderer } from "@/components/markdown-editor";
 import { LiveReaderTelemetry } from "@/components/live-reader-telemetry";
 import { PeerReviewBadge } from "@/components/peer-review-badge";
+import { ZenReaderMode } from "@/components/zen-reader-mode";
+import { TableOfContents } from "@/components/table-of-contents";
+import { ArticlePdfExport } from "@/components/article-pdf-export";
+import { AuthorNewsletterBox } from "@/components/author-newsletter-box";
+import {
+  ArticleSeriesHeader,
+  ArticleSeriesFooter,
+} from "@/components/article-series-nav";
 
 export const revalidate = 30;
 
@@ -79,13 +87,17 @@ export default async function ArticleDetailPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const res = await fetchArticle(slug);
+  const [res, seriesRes] = await Promise.all([
+    fetchArticle(slug),
+    fetchArticleSeries(slug),
+  ]);
 
   if (!res.success || !res.data?.article) {
     notFound();
   }
 
   const article = res.data.article;
+  const series = seriesRes.success ? seriesRes.data?.series || null : null;
 
   const publishedDate = article.published_at
     ? new Date(article.published_at).toLocaleDateString("en-US", {
@@ -98,8 +110,8 @@ export default async function ArticleDetailPage({
   return (
     <article className="container max-w-3xl mx-auto px-4 py-12 space-y-10">
       <AnalyticsTracker eventType="article_view" articleId={article.id} />
-      {/* Back Navigation */}
-      <div>
+      {/* Back Navigation & Zen Reader Mode */}
+      <div className="flex items-center justify-between">
         <Link
           href="/explore"
           className="inline-flex items-center gap-1.5 text-xs font-mono text-zinc-400 hover:text-emerald-400 transition-colors"
@@ -107,6 +119,19 @@ export default async function ArticleDetailPage({
           <ArrowLeft className="w-3.5 h-3.5" />
           <span>Back to Explorer</span>
         </Link>
+
+        <div className="flex items-center gap-2">
+          <ArticlePdfExport articleTitle={article.title} />
+          <ZenReaderMode
+            title={article.title}
+            subtitle={article.subtitle}
+            authorName={article.author.display_name || article.author.username}
+            authorUsername={article.author.username}
+            readingTimeMinutes={article.reading_time_minutes}
+            publishedDate={publishedDate}
+            content={article.content}
+          />
+        </div>
       </div>
 
       {/* Article Header */}
@@ -204,8 +229,14 @@ export default async function ArticleDetailPage({
         />
       </header>
 
+      {/* Engineering Series Progress Banner */}
+      <ArticleSeriesHeader series={series} />
+
       {/* Architecture Guild Peer Review Verdict */}
       <PeerReviewBadge articleSlug={article.slug} />
+
+      {/* Interactive Table of Contents & Outline */}
+      <TableOfContents content={article.content} />
 
       {/* Main Technical Article Body */}
       <section className="max-w-none font-sans leading-relaxed text-base">
@@ -247,6 +278,16 @@ export default async function ArticleDetailPage({
         initialLikesCount={article.likes_count}
         initialBookmarksCount={article.bookmarks_count}
         initialCommentsCount={article.comments_count}
+      />
+
+      {/* Multi-Part Series Footer Navigator */}
+      <ArticleSeriesFooter series={series} />
+
+      {/* Technical Dispatches Newsletter Subscription */}
+      <AuthorNewsletterBox
+        authorName={article.author.display_name}
+        authorUsername={article.author.username}
+        source="article_bottom"
       />
 
       {/* Interactive Comments & Discussions */}

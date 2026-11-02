@@ -10,6 +10,7 @@ import {
   Category,
 } from "@/lib/api";
 import { MarkdownEditor } from "@/components/markdown-editor";
+import { StudioZenWriterModal } from "@/components/studio-zen-writer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -56,6 +57,7 @@ export default function NewArticlePage() {
 
   // UI state
   const [showSettingsDrawer, setShowSettingsDrawer] = useState(true);
+  const [isZenModeOpen, setIsZenModeOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
@@ -194,6 +196,18 @@ export default function NewArticlePage() {
           >
             <SlidersHorizontal className="w-3.5 h-3.5" />
             <span className="hidden lg:inline">Publishing Settings</span>
+          </Button>
+
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setIsZenModeOpen(true)}
+            className="h-8 border-cyan-500/40 bg-cyan-950/20 hover:bg-cyan-950/40 text-cyan-300 font-mono text-xs gap-1.5 shadow-sm"
+            title="Open Distraction-Free Fullscreen Zen Writer"
+          >
+            <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+            <span className="hidden sm:inline">Zen Writer</span>
           </Button>
 
           <Button
@@ -505,6 +519,17 @@ export default function NewArticlePage() {
           </aside>
         )}
       </div>
+
+      {/* Fullscreen Zen Writer */}
+      {isZenModeOpen && (
+        <StudioZenWriterModal
+          title={title}
+          content={content}
+          onChangeTitle={setTitle}
+          onChangeContent={setContent}
+          onClose={() => setIsZenModeOpen(false)}
+        />
+      )}
     </div>
   );
 }
