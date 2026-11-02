@@ -1,4 +1,4 @@
-# QUORIX Platform Operations & Monitoring Guide
+# WRITNEXA Platform Operations & Monitoring Guide
 
 ## 1. System Overview & Architecture
 

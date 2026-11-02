@@ -1,4 +1,4 @@
-# QUORIX — Amazon SES Integration & Email Architecture Guide
+# WRITNEXA — Amazon SES Integration & Email Architecture Guide
 
 This document describes the email delivery architecture for QUORIX, detailing how to configure Amazon SES via either the **AWS SDK v2 API** or the **Amazon SES SMTP Relay**, manage PostgreSQL transactional outbox queues, setup DNS authentication (DKIM, SPF, DMARC), and graduate from the SES sandbox into production.
 
@@ -131,31 +131,31 @@ To ensure high inbox placement and prevent spoofing, configure these DNS records
 
 ### A. Domain Verification & Easy DKIM (3 CNAME Records)
 In the Amazon SES Console (**Identities > Create Identity > Domain**):
-- Enter your domain (e.g., `quorix.io`).
+- Enter your domain (e.g., `writnexa.dev`).
 - Select **Easy DKIM** (RSA 2048-bit).
 - SES generates 3 CNAME records. Add them to your DNS:
 
 | Type | Name | Value | TTL |
 | :--- | :--- | :--- | :--- |
-| `CNAME` | `<token1>._domainkey.quorix.io` | `<token1>.dkim.amazonses.com` | Auto / 300 |
-| `CNAME` | `<token2>._domainkey.quorix.io` | `<token2>.dkim.amazonses.com` | Auto / 300 |
-| `CNAME` | `<token3>._domainkey.quorix.io` | `<token3>.dkim.amazonses.com` | Auto / 300 |
+| `CNAME` | `<token1>._domainkey.writnexa.dev` | `<token1>.dkim.amazonses.com` | Auto / 300 |
+| `CNAME` | `<token2>._domainkey.writnexa.dev` | `<token2>.dkim.amazonses.com` | Auto / 300 |
+| `CNAME` | `<token3>._domainkey.writnexa.dev` | `<token3>.dkim.amazonses.com` | Auto / 300 |
 
 ### B. Custom MAIL FROM Domain & SPF
-By default, SES uses `amazonses.com` in the envelope MAIL FROM address, which fails strict DMARC alignment. Configure a custom MAIL FROM subdomain (e.g., `mail.quorix.io`):
+By default, SES uses `amazonses.com` in the envelope MAIL FROM address, which fails strict DMARC alignment. Configure a custom MAIL FROM subdomain (e.g., `mail.writnexa.dev`):
 
 1. **MX Record** (for bounce processing):
    - Type: `MX`
-   - Name: `mail.quorix.io`
+   - Name: `mail.writnexa.dev`
    - Value: `feedback-smtp.us-east-1.amazonses.com`
    - Priority: `10`
 2. **SPF TXT Record**:
    - Type: `TXT`
-   - Name: `mail.quorix.io`
+   - Name: `mail.writnexa.dev`
    - Value: `v=spf1 include:amazonses.com ~all`
-3. **Root Domain SPF Record** (if sending from `@quorix.io`):
+3. **Root Domain SPF Record** (if sending from `@writnexa.dev`):
    - Type: `TXT`
-   - Name: `@` (or `quorix.io`)
+   - Name: `@` (or `writnexa.dev`)
    - Value: `v=spf1 include:amazonses.com ~all`
 
 ### C. DMARC Policy (Domain-based Message Authentication)
@@ -163,7 +163,7 @@ Add a TXT record to protect your brand and monitor deliverability:
 
 | Type | Name | Value |
 | :--- | :--- | :--- |
-| `TXT` | `_dmarc.quorix.io` | `v=DMARC1; p=quarantine; pct=100; rua=mailto:dmarc-reports@quorix.io` |
+| `TXT` | `_dmarc.writnexa.dev` | `v=DMARC1; p=quarantine; pct=100; rua=mailto:dmarc-reports@writnexa.dev` |
 
 *Policy Explanation*:
 - `p=quarantine`: Diverts unauthenticated mail to spam/junk folders instead of outright rejection while warming up.
@@ -183,7 +183,7 @@ New AWS SES accounts start in the **Sandbox Environment**, where:
 2. Click **Request production access**.
 3. Fill out the application with the following production-grade responses:
    - **Mail type**: Transactional.
-   - **Website URL**: `https://quorix.io` (or your staging/live domain).
+   - **Website URL**: `https://writnexa.dev` (or your staging/live domain).
    - **How do you acquire email addresses?**:
      > *"Email addresses are collected strictly when software developers register for a QUORIX account via our double opt-in verification form. We never purchase or scrape email lists."*
    - **How will you handle bounces and complaints?**:

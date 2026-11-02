@@ -1,12 +1,12 @@
-# QUORIX — Comprehensive System Architecture & Engineering Blueprint
+# WRITNEXA — Comprehensive System Architecture & Engineering Blueprint
 
-This document specifies the technical architecture, directory structure, module boundaries, security protocols, and operational workflows for QUORIX.
+This document specifies the technical architecture, directory structure, module boundaries, security protocols, and operational workflows for WRITNEXA.
 
 ---
 
 ## 1. High-Level System Architecture
 
-QUORIX is architected as a **Modular Monolith**. It delivers microservice-grade domain boundaries while retaining the operational simplicity, transactional consistency, and single-binary deployment velocity of a unified Go backend and a Next.js App Router frontend.
+WRITNEXA is architected as a **Modular Monolith**. It delivers microservice-grade domain boundaries while retaining the operational simplicity, transactional consistency, and single-binary deployment velocity of a unified Go backend and a Next.js App Router frontend.
 
 ```mermaid
 flowchart TD
@@ -273,7 +273,7 @@ sequenceDiagram
 
 Direct synchronous email sending in HTTP request handlers is strictly forbidden as it introduces latency spikes, timeout failures, and data inconsistency.
 
-QUORIX uses the **Transactional Outbox Pattern**:
+WRITNEXA uses the **Transactional Outbox Pattern**:
 
 ```mermaid
 flowchart LR
@@ -326,7 +326,7 @@ flowchart TD
         NginxProxy["Nginx (Reverse Proxy & TLS Termination)\n• SSL (Let's Encrypt)\n• Rate Limiting (100 req/min/IP)\n• HTTP/2 & Gzip/Brotli Compression"]
       
         subgraph DockerNet["Docker Bridge Network"]
-            GoApp["QUORIX Go Backend (Binary)\n• Listening on :8080\n• Slog telemetry\n• Outbox Worker"]
+            GoApp["WRITNEXA Go Backend (Binary)\n• Listening on :8080\n• Slog telemetry\n• Outbox Worker"]
             RedisInst["Redis 7 Container\n• Listening on :6379\n• Append-Only Persistence"]
             MailpitDev["Mailpit Container (Dev Only)\n• :1025 (SMTP)\n• :8025 (Web UI)"]
         end
@@ -362,7 +362,7 @@ flowchart TD
 ### Decision 1: Modular Monolith vs. Microservices
 
 - **Decision**: Build as a modular monolith inside a single repository.
-- **Rationale**: QUORIX requires strict transactional consistency between articles, tags, authors, and email outbox. Microservices would introduce distributed transaction overhead, network latency, and operational complexity with no initial scaling benefit.
+- **Rationale**: WRITNEXA requires strict transactional consistency between articles, tags, authors, and email outbox. Microservices would introduce distributed transaction overhead, network latency, and operational complexity with no initial scaling benefit.
 - **Risk Mitigation**: Strict module package boundaries in Go prevent cyclic dependencies. Any module can be split into a standalone service in the future if required.
 
 ### Decision 2: PostgreSQL Full-Text Search vs. External Search Engine
@@ -382,3 +382,13 @@ flowchart TD
 - **Decision**: Author Studio client uploads images directly to AWS S3 via backend-generated presigned PUT URLs.
 - **Rationale**: Streaming large image payloads through the Go backend consumes memory and saturates backend network bandwidth. Presigned URLs allow direct client-to-S3 transfers with strict file size and MIME type restrictions.
 - **Risk Mitigation**: Presigned URLs expire in 5 minutes; backend validates user identity and enforces quotas before issuing upload URLs.
+
+---
+
+## 8. Deployment & Ingress Specifications
+
+For detailed architectural specifications regarding containerization, multi-stage builds, reverse proxy routing, Let's Encrypt automated SSL termination, and dual-zone DDoS mitigation, refer to:
+- [Docker & NGINX Architecture Guide](file:///docs/deployment/docker_and_nginx_guide.md)
+- [Production Deployment Guide](file:///docs/deployment/production_deployment_guide.md)
+- [Environment Variable Reference](file:///docs/deployment/environment_variable_reference.md)
+

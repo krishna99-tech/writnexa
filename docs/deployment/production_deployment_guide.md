@@ -1,4 +1,4 @@
-# QUORIX Production Deployment Guide
+# WRITNEXA Production Deployment Guide
 
 This guide details the procedure for deploying QUORIX to production environments using Docker Compose, reverse proxying with Nginx, automated SSL provisioning, and zero-downtime database migrations.
 
@@ -11,9 +11,9 @@ This guide details the procedure for deploying QUORIX to production environments
 - **Storage**: 40 GB NVMe SSD with automated EBS/block storage snapshots
 - **Docker Engine**: version 24.0+ and Docker Compose v2.20+
 - **Domain Names**:
-  - Web & App: `quorix.io` and `www.quorix.io`
-  - API Gateway: `api.quorix.io` (or unified reverse-proxy via path routing `/api/v1`)
-  - Amazon SES Verified Sending Domain: `notifications.quorix.io`
+  - Web & App: `writnexa.dev` and `www.writnexa.dev`
+  - API Gateway: `api.writnexa.dev` (or unified reverse-proxy via path routing `/api/v1`)
+  - Amazon SES Verified Sending Domain: `notifications.writnexa.dev`
 
 ---
 
@@ -72,7 +72,7 @@ goose -dir backend/migrations postgres "postgres://quorix_app:SECURE_PASSWORD@po
 
 For Let's Encrypt automated TLS certificates:
 ```bash
-certbot certonly --standalone -d quorix.io -d www.quorix.io -d api.quorix.io --agree-tos --email admin@quorix.io
+certbot certonly --standalone -d writnexa.dev -d www.writnexa.dev -d api.writnexa.dev --agree-tos --email admin@writnexa.dev
 ```
 Symlink or copy certificates to `/opt/quorix/certs/quorix.crt` and `/opt/quorix/certs/quorix.key`.
 
@@ -97,7 +97,7 @@ docker compose -f docker-compose.prod.yml ps
 
 1. **Liveness Probe**: `curl -f http://localhost:8080/health` -> `{"status":"ok"}`
 2. **Readiness Probe**: `curl -f http://localhost:8080/ready` -> `{"status":"ready","checks":{"database":"ready","redis":"ready"}}`
-3. **Frontend SSR**: `curl -I https://quorix.io` -> `HTTP/2 200`
+3. **Frontend SSR**: `curl -I https://writnexa.dev` -> `HTTP/2 200`
 4. **HSTS Header**: `Strict-Transport-Security: max-age=63072000; includeSubDomains; preload`
 5. **Security Headers**: `X-Frame-Options: SAMEORIGIN`, `X-Content-Type-Options: nosniff`
 

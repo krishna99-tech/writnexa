@@ -1,4 +1,4 @@
-# QUORIX Production Security Checklist & Hardening Verification
+# WRITNEXA Production Security Checklist & Hardening Verification
 
 This checklist validates the security posture of the QUORIX platform prior to production traffic activation.
 

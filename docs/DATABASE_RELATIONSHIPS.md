@@ -1,4 +1,4 @@
-# QUORIX — Core Database Relationships & Migration Guide
+# WRITNEXA — Core Database Relationships & Migration Guide
 
 This document records the Phase 2 relational schema, constraints, indexing strategies, and Goose migration workflows.
 

@@ -1,4 +1,4 @@
-# QUORIX Disaster Recovery & Database Backup Runbook
+# WRITNEXA Disaster Recovery & Database Backup Runbook
 
 ## 1. Objectives & SLA Targets
 - **Recovery Point Objective (RPO)**: < 5 minutes (WAL archiving enabled).
@@ -36,7 +36,7 @@ PGPASSWORD="${DB_PASSWORD}" pg_dump \
 echo "[${TIMESTAMP}] Backup completed: ${BACKUP_FILE} ($(du -h "${BACKUP_FILE}" | cut -f1))" >> "${LOG_FILE}"
 
 # Encrypt backup using GPG or AWS KMS before offsite upload
-gpg --batch --yes --encrypt --recipient ops@quorix.io "${BACKUP_FILE}"
+gpg --batch --yes --encrypt --recipient ops@writnexa.dev "${BACKUP_FILE}"
 
 # Offsite sync to private S3 disaster recovery bucket
 aws s3 cp "${BACKUP_FILE}.gpg" "s3://${DISASTER_RECOVERY_BUCKET}/postgres/daily/" \

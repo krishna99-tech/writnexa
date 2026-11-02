@@ -1,6 +1,6 @@
-# QUORIX Environment Variable Reference
+# WRITNEXA Environment Variable Reference
 
-This document provides a comprehensive specification of every environment variable required across QUORIX services.
+This document provides a comprehensive specification of every environment variable required across WRITNEXA services.
 
 ---
 
@@ -11,7 +11,7 @@ This document provides a comprehensive specification of every environment variab
 | `APP_ENV` | string | `production` | Execution environment (`production`, `staging`, `development`). In `production`, debug routes are suppressed. |
 | `APP_PORT` | integer | `8080` | Port on which the Go HTTP API binds. |
 | `APP_LOG_LEVEL` | string | `info` | Minimum log severity level (`debug`, `info`, `warn`, `error`). Logs are structured JSON in production. |
-| `APP_FRONTEND_URL` | string (URL) | `https://quorix.io` | Public origin of the Next.js web application for emails and auth redirects. |
+| `APP_FRONTEND_URL` | string (URL) | `https://writnexa.dev` | Public origin of the Next.js web application for emails and auth redirects. |
 
 ---
 
@@ -57,7 +57,7 @@ This document provides a comprehensive specification of every environment variab
 
 | Variable | Type | Default | Description |
 |---|---|---|---|
-| `CORS_ALLOWED_ORIGINS` | comma-separated string | `https://quorix.io,https://www.quorix.io` | Strict origin whitelist for HTTP CORS headers. Wildcards are rejected. |
+| `CORS_ALLOWED_ORIGINS` | comma-separated string | `https://writnexa.dev,https://www.writnexa.dev` | Strict origin whitelist for HTTP CORS headers. Wildcards are rejected. |
 
 ---
 
@@ -66,8 +66,8 @@ This document provides a comprehensive specification of every environment variab
 | Variable | Type | Default | Description |
 |---|---|---|---|
 | `AWS_REGION` | string | `us-east-1` | AWS Region hosting the verified SES sending domain. |
-| `AWS_SES_FROM_EMAIL` | string (email) | `notifications@quorix.io` | Verified RFC 5322 sending address. |
-| `AWS_SES_FROM_NAME` | string | `QUORIX Platform` | Display name attached to transactional emails. |
+| `AWS_SES_FROM_EMAIL` | string (email) | `notifications@writnexa.dev` | Verified RFC 5322 sending address. |
+| `AWS_SES_FROM_NAME` | string | `WRITNEXA Platform` | Display name attached to transactional emails. |
 | `AWS_ACCESS_KEY_ID` | string | *optional* | Static credentials if IAM instance role is not used. |
 | `AWS_SECRET_ACCESS_KEY` | string | *optional* | Static secret if IAM instance role is not used. |
 
@@ -77,6 +77,6 @@ This document provides a comprehensive specification of every environment variab
 
 | Variable | Type | Default | Description |
 |---|---|---|---|
-| `NEXT_PUBLIC_API_URL` | string (URL) | `https://api.quorix.io` or `https://quorix.io` | Client-facing base URL for browser API requests. |
+| `NEXT_PUBLIC_API_URL` | string (URL) | `https://api.writnexa.dev` or `https://writnexa.dev` | Client-facing base URL for browser API requests. |
 | `INTERNAL_API_URL` | string (URL) | `http://backend:8080` | Internal Docker network URL for server-side Next.js data fetching. |
 

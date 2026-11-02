@@ -1,10 +1,10 @@
-# QUORIX — Master Project Specification & Vision
+# WRITNEXA — Master Project Specification & Vision
 
 ## 1. Executive Summary
 
-**QUORIX** is a specialized, production-grade technical publishing ecosystem engineered specifically for software engineers, frontend/backend/full-stack developers, DevOps engineers, technical writers, engineering students, and open-source contributors.
+**WRITNEXA** is a specialized, production-grade technical publishing ecosystem engineered specifically for software engineers, frontend/backend/full-stack developers, DevOps engineers, technical writers, engineering students, and open-source contributors.
 
-Unlike generic blogging or CMS platforms, QUORIX is purpose-built to handle complex developer workflows:
+Unlike generic blogging or CMS platforms, WRITNEXA is purpose-built to handle complex developer workflows:
 - First-class code syntax highlighting, diff viewing, and one-click code copying.
 - Deep Markdown-driven authoring with real-time preview and revision tracking.
 - High-performance, SEO-optimized public reading experiences with zero login barriers.
@@ -29,7 +29,7 @@ Unlike generic blogging or CMS platforms, QUORIX is purpose-built to handle comp
 
 ```
                                   ┌──────────────────────────────┐
-                                  │      QUORIX Platform         │
+                                  │      WRITNEXA Platform         │
                                   └──────────────┬───────────────┘
                      ┌───────────────────────────┼───────────────────────────┐
                      ▼                           ▼                           ▼

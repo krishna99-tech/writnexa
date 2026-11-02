@@ -53,9 +53,9 @@ services:
       REDIS_ENABLED: "true"
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:-d75c20422550d353390ab17aae39469170a3459e0ebce1842212d6c73efcd5c7}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-bdf45c54baae6252374298b20aedaa58ec9bcb949b808c28f890f0a6b676fe82}
-      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-https://quorix.io,https://www.quorix.io}
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-https://writnexa.dev,https://www.writnexa.dev,https://writnexa.com}
       AWS_REGION: ${AWS_REGION:-us-east-1}
-      AWS_SES_FROM_EMAIL: ${AWS_SES_FROM_EMAIL:-notifications@quorix.io}
+      AWS_SES_FROM_EMAIL: ${AWS_SES_FROM_EMAIL:-notifications@writnexa.dev}
     depends_on:
       postgres:
         condition: service_healthy
@@ -75,7 +75,7 @@ services:
     environment:
       NODE_ENV: production
       NEXT_TELEMETRY_DISABLED: "1"
-      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://quorix.io}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-https://writnexa.dev}
     depends_on:
       - backend
     networks:

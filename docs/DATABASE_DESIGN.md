@@ -1,4 +1,4 @@
-# QUORIX — Database Architecture & Relational Schema Design
+# WRITNEXA — Database Architecture & Relational Schema Design
 
 This specification defines the normalized PostgreSQL 16 schema, data types, indexes, foreign key constraints, and relational mappings for QUORIX.
 

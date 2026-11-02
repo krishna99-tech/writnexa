@@ -1,4 +1,4 @@
-# QUORIX — Phased Development Roadmap & Execution Strategy
+# WRITNEXA — Phased Development Roadmap & Execution Strategy
 
 To uphold the core development rule—**build phase by phase, never generate the entire application at once, verify each phase with automated and manual tests, and obtain user approval before starting the next phase**—this roadmap outlines the complete project lifecycle.
 

@@ -1,4 +1,4 @@
-# QUORIX Administrator Access & Authentication Guide
+# WRITNEXA Administrator Access & Authentication Guide
 
 This guide provides the necessary authentication credentials, access instructions, and role permissions for platform administrators and operators.
 
@@ -10,7 +10,7 @@ Upon initial deployment and database seeding, a default **Super Administrator** 
 
 | Attribute | Value |
 |---|---|
-| **Email** | `admin@quorix.io` |
+| **Email** | `admin@writnexa.dev` |
 | **Password** | `QuorixAdmin2026!` |
 | **Username** | `admin` |
 | **Role** | `super_admin` |
@@ -33,7 +33,7 @@ Upon initial deployment and database seeding, a default **Super Administrator** 
    - Click **Advanced** (or **More Details**) and select **Proceed to localhost (unsafe)** or **Accept the Risk and Continue**.
 
 3. **Enter Credentials**:
-   - **Email**: `admin@quorix.io`
+   - **Email**: `admin@writnexa.dev`
    - **Password**: `QuorixAdmin2026!`
    - Click **Sign In**.
 
@@ -67,9 +67,9 @@ The seed script also provisions demonstration author accounts for testing writin
 
 | Display Name | Username | Email | Password | Role |
 |---|---|---|---|---|
-| **Alex Morgan** | `alexmorgan` | `alex.morgan@quorix.io` | `QuorixPass2026!` | `author` |
-| **Elena Rostova** | `elenarostova` | `elena.rostova@quorix.io` | `QuorixPass2026!` | `author` |
-| **Marcus Vance** | `marcusvance` | `marcus.vance@quorix.io` | `QuorixPass2026!` | `author` |
+| **Alex Morgan** | `alexmorgan` | `alex.morgan@writnexa.dev` | `QuorixPass2026!` | `author` |
+| **Elena Rostova** | `elenarostova` | `elena.rostova@writnexa.dev` | `QuorixPass2026!` | `author` |
+| **Marcus Vance** | `marcusvance` | `marcus.vance@writnexa.dev` | `QuorixPass2026!` | `author` |
 
 ---
 

@@ -1,4 +1,4 @@
-# QUORIX Final Production Architecture
+# WRITNEXA Final Production Architecture
 
 This document describes the high-level architecture, module decomposition, data flow, and runtime topology of the QUORIX developer publishing and technical knowledge platform.
 

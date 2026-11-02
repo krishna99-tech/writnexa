@@ -1,4 +1,4 @@
-# QUORIX — RESTful API Design & Interface Specifications
+# WRITNEXA — RESTful API Design & Interface Specifications
 
 All endpoints are versioned under `/api/v1`.
 
